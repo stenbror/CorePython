@@ -54,6 +54,16 @@ type Symbol =
     |   PyFloorDiv          of uint32 * uint32
     |   PyDivAssign         of uint32 * uint32
     |   PyDiv               of uint32 * uint32
+    |   PyShiftLeftAssign   of uint32 * uint32
+    |   PyShiftLeft         of uint32 * uint32
+    |   PyLessEqual         of uint32 * uint32
+    |   PyLess              of uint32 * uint32
+    |   PyShiftRightAssign  of uint32 * uint32
+    |   PyShiftRight        of uint32 * uint32
+    |   PyGreaterEqual      of uint32 * uint32
+    |   PyGreater           of uint32 * uint32
+    |   PyEllipsis          of uint32 * uint32
+    |   PyNotEqual          of uint32 * uint32
 
     
     
@@ -71,7 +81,17 @@ let IsLiteralOrDelimiterSymbol( values : (char * char * char), startPos: uint32,
     |   ( '/', '/', '=' )   -> Some( Symbol.PyFloorDivAssign( startPos, endPos), 3uy )
     |   ( '/', '/', _ )     -> Some( Symbol.PyFloorDiv( startPos, endPos), 2uy )
     |   ( '/', '=', _ )     -> Some( Symbol.PyDivAssign( startPos, endPos), 2uy )
-    |   ( '/', _ , _ )      -> Some( Symbol.PyDiv( startPos, endPos), 2uy )
+    |   ( '/', _ , _ )      -> Some( Symbol.PyDiv( startPos, endPos), 1uy )
+    |   ( '<', '<', '=' )   -> Some( Symbol.PyShiftLeftAssign( startPos, endPos), 3uy )
+    |   ( '<', '<', _ )     -> Some( Symbol.PyShiftLeft( startPos, endPos), 2uy )
+    |   ( '<', '=', _ )     -> Some( Symbol.PyLessEqual( startPos, endPos), 2uy )
+    |   ( '<', '>', _ )     -> Some( Symbol.PyNotEqual( startPos, endPos), 2uy )
+    |   ( '<', _ , _ )      -> Some( Symbol.PyLess( startPos, endPos), 1uy )
+    |   ( '>', '>', '=' )   -> Some( Symbol.PyShiftRightAssign( startPos, endPos), 3uy )
+    |   ( '>', '>', _ )     -> Some( Symbol.PyShiftRight( startPos, endPos), 2uy )
+    |   ( '>', '=', _ )     -> Some( Symbol.PyGreaterEqual( startPos, endPos), 2uy )
+    |   ( '>', _ , _ )      -> Some( Symbol.PyGreater( startPos, endPos), 1uy )
+    |   ( '.', '.', '.' )   -> Some( Symbol.PyEllipsis( startPos, endPos), 3uy )
     |   _                   -> None 
 
 let IsReservedKeywordSymbol(text: string, startPos: uint32) : Symbol option =
