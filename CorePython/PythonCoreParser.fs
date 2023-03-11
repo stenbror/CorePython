@@ -64,6 +64,44 @@ type Symbol =
     |   PyGreater           of uint32 * uint32
     |   PyEllipsis          of uint32 * uint32
     |   PyNotEqual          of uint32 * uint32
+    |   PyDot               of uint32 * uint32
+    |   PyPlusAssign        of uint32 * uint32
+    |   PyPlus              of uint32 * uint32
+    |   PyMinusAssign       of uint32 * uint32
+    |   PyArrow             of uint32 * uint32
+    |   PyMinus             of uint32 * uint32
+    |   PyModuloAssign      of uint32 * uint32
+    |   PyModulo            of uint32 * uint32
+    |   PyMatriceAssign     of uint32 * uint32
+    |   PyMatrice           of uint32 * uint32
+    |   PyColonAssign       of uint32 * uint32
+    |   PyColon             of uint32 * uint32
+    |   PyBitwiseAndAssign  of uint32 * uint32        
+    |   PyBitwiseAnd        of uint32 * uint32
+    |   PyBitwiseOrAssign   of uint32 * uint32
+    |   PyBitwiseOr         of uint32 * uint32
+    |   PyBitwiseXorAssign  of uint32 * uint32
+    |   PyBitwiseXor        of uint32 * uint32
+    |   PyBitwiseInvert     of uint32 * uint32
+    |   PySemicolon         of uint32 * uint32
+    |   PyComma             of uint32 * uint32
+    |   PyEqual             of uint32 * uint32
+    |   PyAssign            of uint32 * uint32
+    |   PyLeftParen         of uint32 * uint32
+    |   PyLeftBracket       of uint32 * uint32
+    |   PyLeftCurly         of uint32 * uint32
+    |   PyRightParen        of uint32 * uint32
+    |   PyRightBracket      of uint32 * uint32
+    |   PyRightCurly        of uint32 * uint32
+    |   Name                of uint32 * uint32 * string
+    |   Number              of uint32 * uint32 * string
+    |   String              of uint32 * uint32 * string array
+    |   TypeComment         of uint32 * uint32 * string
+    |   Newline             of uint32 * uint32
+    |   Indent
+    |   Dedent
+    
+    
 
     
     
