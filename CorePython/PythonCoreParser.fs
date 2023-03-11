@@ -100,11 +100,7 @@ type Symbol =
     |   Newline             of uint32 * uint32
     |   Indent
     |   Dedent
-    
-    
-
-    
-    
+     
 type TokenStream = Symbol list
 
     
@@ -130,6 +126,36 @@ let IsLiteralOrDelimiterSymbol( values : (char * char * char), startPos: uint32,
     |   ( '>', '=', _ )     -> Some( Symbol.PyGreaterEqual( startPos, endPos), 2uy )
     |   ( '>', _ , _ )      -> Some( Symbol.PyGreater( startPos, endPos), 1uy )
     |   ( '.', '.', '.' )   -> Some( Symbol.PyEllipsis( startPos, endPos), 3uy )
+    |   ( '.', _ , _ )      -> Some( Symbol.PyDot( startPos, endPos), 1uy )
+    |   ( '+', '=', _ )     -> Some( Symbol.PyPlusAssign( startPos, endPos), 2uy )
+    |   ( '+', _ , _ )      -> Some( Symbol.PyPlus( startPos, endPos), 1uy )
+    |   ( '-', '=', _ )     -> Some( Symbol.PyMinusAssign( startPos, endPos), 2uy )
+    |   ( '-', '>', _ )     -> Some( Symbol.PyArrow( startPos, endPos), 2uy )
+    |   ( '-', _ , _ )      -> Some( Symbol.PyMinus( startPos, endPos), 1uy )
+    |   ( '%', '=', _ )     -> Some( Symbol.PyModuloAssign( startPos, endPos), 2uy )
+    |   ( '%', _ , _ )      -> Some( Symbol.PyModulo( startPos, endPos), 1uy )
+    |   ( '@', '=', _ )     -> Some( Symbol.PyMatriceAssign( startPos, endPos), 2uy )
+    |   ( '@', _ , _ )      -> Some( Symbol.PyMatrice( startPos, endPos), 1uy )
+    |   ( ':', '=', _ )     -> Some( Symbol.PyColonAssign( startPos, endPos), 2uy )
+    |   ( ':', _ , _ )      -> Some( Symbol.PyColon( startPos, endPos), 1uy )
+    |   ( '&', '=', _ )     -> Some( Symbol.PyBitwiseAndAssign( startPos, endPos), 2uy )
+    |   ( '&', _ , _ )      -> Some( Symbol.PyBitwiseAnd( startPos, endPos), 1uy )
+    |   ( '|', '=', _ )     -> Some( Symbol.PyBitwiseOrAssign( startPos, endPos), 2uy )
+    |   ( '|', _ , _ )      -> Some( Symbol.PyBitwiseOr( startPos, endPos), 1uy )
+    |   ( '^', '=', _ )     -> Some( Symbol.PyBitwiseXorAssign( startPos, endPos), 2uy )
+    |   ( '^', _ , _ )      -> Some( Symbol.PyBitwiseXor( startPos, endPos), 1uy )
+    |   ( '=', '=', _ )     -> Some( Symbol.PyEqual( startPos, endPos), 2uy )
+    |   ( '=', _ , _ )      -> Some( Symbol.PyAssert( startPos, endPos), 1uy )
+    |   ( '!', '=', _ )     -> Some( Symbol.PyNotEqual( startPos, endPos), 2uy )
+    |   ( '~', _ , _ )      -> Some( Symbol.PyBitwiseInvert( startPos, endPos), 1uy )
+    |   ( ';', _ , _ )      -> Some( Symbol.PySemicolon( startPos, endPos), 1uy )
+    |   ( ',', _ , _ )      -> Some( Symbol.PyComma( startPos, endPos), 1uy )
+    |   ( '(', _ , _ )      -> Some( Symbol.PyLeftParen( startPos, endPos), 1uy )
+    |   ( '[', _ , _ )      -> Some( Symbol.PyLeftBracket( startPos, endPos), 1uy )
+    |   ( '{', _ , _ )      -> Some( Symbol.PyLeftCurly( startPos, endPos), 1uy )
+    |   ( ')', _ , _ )      -> Some( Symbol.PyRightParen( startPos, endPos), 1uy )
+    |   ( ']', _ , _ )      -> Some( Symbol.PyRightBracket( startPos, endPos), 1uy )
+    |   ( '}', _ , _ )      -> Some( Symbol.PyRightCurly( startPos, endPos), 1uy )
     |   _                   -> None 
 
 let IsReservedKeywordSymbol(text: string, startPos: uint32) : Symbol option =
