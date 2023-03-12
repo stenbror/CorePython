@@ -129,6 +129,9 @@ type AbstractSyntaxNodes =
     |   Minus           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   ShiftLeft       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   ShiftRight      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseAnd      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseXor      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseOr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -434,7 +437,19 @@ and ParseShiftExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStrea
             do ()
     left, rest
 
-and ParseAndExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseAndExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition( stream )
+    let mutable left, rest = ParseShiftExpr stream
+    while   match TryToken rest with
+            |  Some( PyBitwiseAnd( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseShiftExpr rest2
+                    left <- BitwiseAnd( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  _ -> false
+            do ()
+    left, rest
 
 and ParseXorExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 

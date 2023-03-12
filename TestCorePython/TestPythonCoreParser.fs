@@ -238,3 +238,21 @@ let ``Parse Expression rule 'shift expr' with '>>'`` () =
     let expecting = AbstractSyntaxNodes.ShiftRight( 0u, 3u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyShiftRight( 1u, 2u ), Number( 3u, 3u, PyNumber( 3u, 3u, "8" ) ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'and expr' with single operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseAnd( 1u, 3u ); Symbol.PyNumber( 4u, 4u, "8" ); ]
+    let node, rest  = stream |> ParseAndExpr
+    let expecting = AbstractSyntaxNodes.BitwiseAnd( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseAnd( 1u, 3u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'and expr' with multiple operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseAnd( 1u, 3u ); Symbol.PyNumber( 4u, 4u, "8" ); Symbol.PyBitwiseAnd( 6u, 8u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseAndExpr
+    let expecting = AbstractSyntaxNodes.BitwiseAnd( 0u, 9u,
+            BitwiseAnd( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseAnd( 1u, 3u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) ),
+            Symbol.PyBitwiseAnd( 6u, 8u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
