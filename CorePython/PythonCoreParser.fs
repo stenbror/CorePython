@@ -125,6 +125,8 @@ type AbstractSyntaxNodes =
     |   FloorDiv        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Modulo          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Matrices        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Plus            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Minus           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -390,7 +392,25 @@ and ParseTerm( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
             do ()
     left, rest
 
-and ParseArithExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseArithExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition( stream )
+    let mutable left, rest = ParseTerm stream
+    while   match TryToken rest with
+            |  Some( PyPlus( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseTerm rest2
+                    left <- Plus( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyMinus( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseTerm rest2
+                    left <- Minus( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  _ -> false
+            do ()
+    left, rest
 
 and ParseShiftExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
