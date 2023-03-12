@@ -256,3 +256,21 @@ let ``Parse Expression rule 'and expr' with multiple operator`` () =
             Symbol.PyBitwiseAnd( 6u, 8u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'xor expr' with single operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseXor( 1u, 3u ); Symbol.PyNumber( 4u, 4u, "8" ); ]
+    let node, rest  = stream |> ParseXorExpr
+    let expecting = AbstractSyntaxNodes.BitwiseXor( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseXor( 1u, 3u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'xor expr' with multiple operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseXor( 1u, 3u ); Symbol.PyNumber( 4u, 4u, "8" ); Symbol.PyBitwiseXor( 6u, 8u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseXorExpr
+    let expecting = AbstractSyntaxNodes.BitwiseXor( 0u, 9u,
+            BitwiseXor( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseXor( 1u, 3u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) ),
+            Symbol.PyBitwiseXor( 6u, 8u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

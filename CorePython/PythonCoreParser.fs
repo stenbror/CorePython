@@ -451,7 +451,20 @@ and ParseAndExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream 
             do ()
     left, rest
 
-and ParseXorExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseXorExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition( stream )
+    let mutable left, rest = ParseAndExpr stream
+    while   match TryToken rest with
+            |  Some( PyBitwiseXor( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseAndExpr rest2
+                    left <- BitwiseXor( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  _ -> false
+            do ()
+    left, rest
+
 
 and ParseOrExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
