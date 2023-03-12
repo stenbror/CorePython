@@ -127,6 +127,8 @@ type AbstractSyntaxNodes =
     |   Matrices        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Plus            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Minus           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   ShiftLeft       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   ShiftRight      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -412,7 +414,25 @@ and ParseArithExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStrea
             do ()
     left, rest
 
-and ParseShiftExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseShiftExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos  = GetStartPosition( stream )
+    let mutable left, rest = ParseArithExpr stream
+    while   match TryToken rest with
+            |  Some( PyShiftLeft( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseArithExpr rest2
+                    left <- ShiftLeft( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyShiftRight( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseArithExpr rest2
+                    left <- ShiftRight( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  _ -> false
+            do ()
+    left, rest
 
 and ParseAndExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
