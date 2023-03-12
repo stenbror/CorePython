@@ -166,3 +166,43 @@ let ``Parse Expression rule 'unary expr' with '~'`` () =
     let expecting = AbstractSyntaxNodes.BitwiseInvert( 2u, 5u, PyBitwiseInvert( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'term' with '*'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyMul( 1u, 1u ); Symbol.PyNumber( 2u, 2u, "8" ); ]
+    let node, rest  = stream |> ParseTerm
+    let expecting = AbstractSyntaxNodes.Mul( 0u, 2u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyMul( 1u, 1u ), Number( 2u, 2u, PyNumber( 2u, 2u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'term' with '/'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyDiv( 1u, 1u ); Symbol.PyNumber( 2u, 2u, "8" ); ]
+    let node, rest  = stream |> ParseTerm
+    let expecting = AbstractSyntaxNodes.Div( 0u, 2u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyDiv( 1u, 1u ), Number( 2u, 2u, PyNumber( 2u, 2u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'term' with '%'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyModulo( 1u, 1u ); Symbol.PyNumber( 2u, 2u, "8" ); ]
+    let node, rest  = stream |> ParseTerm
+    let expecting = AbstractSyntaxNodes.Modulo( 0u, 2u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyModulo( 1u, 1u ), Number( 2u, 2u, PyNumber( 2u, 2u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'term' with 'matrices'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyMatrice( 1u, 1u ); Symbol.PyNumber( 2u, 2u, "8" ); ]
+    let node, rest  = stream |> ParseTerm
+    let expecting = AbstractSyntaxNodes.Matrices( 0u, 2u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyMatrice( 1u, 1u ), Number( 2u, 2u, PyNumber( 2u, 2u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'term' with '//'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyFloorDiv( 1u, 2u ); Symbol.PyNumber( 3u, 3u, "8" ); ]
+    let node, rest  = stream |> ParseTerm
+    let expecting = AbstractSyntaxNodes.FloorDiv( 0u, 3u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyFloorDiv( 1u, 2u ), Number( 3u, 3u, PyNumber( 3u, 3u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

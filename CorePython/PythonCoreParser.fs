@@ -120,6 +120,11 @@ type AbstractSyntaxNodes =
     |   UnaryPlus       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     |   UnaryMinus      of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     |   BitwiseInvert   of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   Mul             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Div             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   FloorDiv        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Modulo          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Matrices        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -347,7 +352,43 @@ and ParseFactor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream )
     |  _ ->
             ParsePower stream
 
-and ParseTerm( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTerm( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition( stream )
+    let mutable left, rest = ParseFactor stream
+    while   match TryToken rest with
+            |  Some( PyMul( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseFactor rest2
+                    left <- Mul( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyDiv( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseFactor rest2
+                    left <- Div( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyFloorDiv( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseFactor rest2
+                    left <- FloorDiv( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyMatrice( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseFactor rest2
+                    left <- Matrices( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  Some( PyModulo( _ ), rest2 ) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseFactor rest2
+                    left <- Modulo( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            |  _ -> false
+            do ()
+    left, rest
 
 and ParseArithExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
