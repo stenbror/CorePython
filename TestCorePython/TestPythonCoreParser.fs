@@ -115,3 +115,22 @@ let ``Parse Expression rule 'atom' with multiple String literal`` () =
         Symbol.PyString( 26u, 30u, "Mimmi" ) |] );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'atom expr' with await and no trailer`` () =
+    let stream = [ Symbol.PyAwait( 0u, 4u ); Symbol.PyName( 5u, 12u, "__lock__" );  ]
+    let node, rest  = stream |> ParseAtomExpr
+    let expecting = AbstractSyntaxNodes.AtomExpr( 0u, 12u,
+                                                  Some( Symbol.PyAwait( 0u, 4u ) ),
+                                                  AbstractSyntaxNodes.Name(5u, 12u, Symbol.PyName( 5u, 12u, "__lock__" ) ),
+                                                  Option.None )
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'atom expr' with Name literal without await and trailer`` () =
+    let stream = [ Symbol.PyName( 10u, 17u, "__init__" );  ]
+    let node, rest  = stream |> ParseAtomExpr
+    let expecting = AbstractSyntaxNodes.Name( 10u, 17u, Symbol.PyName( 10u, 17u, "__init__" ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

@@ -117,6 +117,7 @@ type AbstractSyntaxNodes =
     |   Name            of uint32 * uint32 * Symbol
     |   Number          of uint32 * uint32 * Symbol
     |   String          of uint32 * uint32 * Symbol array
+    |   AtomExpr        of uint32 * uint32 * Symbol option * AbstractSyntaxNodes * AbstractSyntaxNodes array option
     
 
     
@@ -248,7 +249,11 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
         |   _  ->  0u
     else 0u
     
-
+let GetNodeEndPosition( node: AbstractSyntaxNodes ) : uint32 =
+    match node with
+    |   Name( _ , e , _ ) | Number( _ , e , _ ) | String( _ , e , _ )
+    |   AtomExpr( _ , e , _ , _ , _  ) ->   e
+    |   _   -> 0ul
     
 // Parser:  Expression rules //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -279,7 +284,40 @@ let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
             String( start_pos, end_pos, List.toArray( List.rev nodes ) ), restAgain
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
-and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition(stream)
+    let mutable restAgain = stream
+    let awaitOp = match TryToken stream with
+                  |  Some( PyAwait( _ ), rest) ->
+                      let op = List.head stream
+                      restAgain <- rest
+                      Some( op )
+                  |  _ -> Option.None
+    let right, rest2 = ParseAtom restAgain
+    let mutable trailerList : AbstractSyntaxNodes list = []
+    
+    restAgain <- rest2
+    while   match TryToken restAgain with
+            |   Some( PyLeftParen( _ ), _ )
+            |   Some( PyLeftBracket( _ ), _ )
+            |   Some( PyDot( _ ), _ ) ->
+                    let node5, rest5 = ParseTrailer restAgain
+                    restAgain <- rest5
+                    trailerList <- node5 :: trailerList
+                    true
+            |   _ -> false
+        do ()
+
+    match awaitOp, trailerList with
+        |   Option.None, [] ->
+                right, rest2
+        |   _  ->
+                let trailer = List.toArray( List.rev trailerList )
+                match trailer.Length with
+                |   0   ->
+                    AtomExpr( start_pos, GetNodeEndPosition( right ), awaitOp, right, Option.None ), restAgain
+                |   _ ->
+                    AtomExpr( start_pos, GetNodeEndPosition(Array.last trailer), awaitOp, right, Some( trailer ) ), restAgain
 
 and ParsePower( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
