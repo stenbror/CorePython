@@ -252,7 +252,12 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
 
 let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     match TryToken stream with
-    |   Some ( PyName( s, e, _  ), rest ) ->   Name( s, e, List.head stream ) , rest
+    |   Some ( PyNone( s, e ), rest )       ->   None( s, e, List.head stream ) , rest
+    |   Some ( PyFalse( s, e ), rest )      ->   False( s, e, List.head stream ) , rest
+    |   Some ( PyTrue( s, e ), rest )       ->   True( s, e, List.head stream ) , rest
+    |   Some ( PyEllipsis( s, e ), rest )   ->   Ellipsis( s, e, List.head stream ) , rest
+    |   Some ( PyName( s, e, _  ), rest )   ->   Name( s, e, List.head stream ) , rest
+    |   Some ( PyNumber( s, e, _  ), rest ) ->   Number( s, e, List.head stream ) , rest
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
