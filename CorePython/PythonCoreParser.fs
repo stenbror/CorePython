@@ -2,7 +2,9 @@
 // CorePython:  Parser for Python 3.11 language with tokenizer and needed structures
 //              Copyright (C) 2023 By Richard Magnor Stenbro   stenbror@hotmail.com
 
-module CorePython.Compiler.PythonCoreParser 
+module CorePython.Compiler.PythonCoreParser
+
+open System.IO 
 
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
@@ -95,7 +97,7 @@ type Symbol =
     |   PyRightCurly        of uint32 * uint32
     |   PyName              of uint32 * uint32 * string
     |   PyNumber            of uint32 * uint32 * string
-    |   PyString            of uint32 * uint32 * string array
+    |   PyString            of uint32 * uint32 * string
     |   TypeComment         of uint32 * uint32 * string
     |   Newline             of uint32 * uint32
     |   Indent
@@ -114,7 +116,7 @@ type AbstractSyntaxNodes =
     |   Ellipsis        of uint32 * uint32 * Symbol
     |   Name            of uint32 * uint32 * Symbol
     |   Number          of uint32 * uint32 * Symbol
-    |   String          of uint32 * uint32 * Symbol
+    |   String          of uint32 * uint32 * Symbol array
     
 
     
@@ -258,6 +260,23 @@ let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
     |   Some ( PyEllipsis( s, e ), rest )   ->   Ellipsis( s, e, List.head stream ) , rest
     |   Some ( PyName( s, e, _  ), rest )   ->   Name( s, e, List.head stream ) , rest
     |   Some ( PyNumber( s, e, _  ), rest ) ->   Number( s, e, List.head stream ) , rest
+    |   Some ( PyString( s, e, _ ), rest )  ->
+            let start_pos = s
+            let mutable end_pos = e
+            let mutable restAgain = rest
+            let mutable nodes : SymbolStream = List.Empty
+            nodes <- stream.Head :: nodes
+            while   restAgain.Length > 0 &&
+                    match TryToken restAgain with
+                    |  Some(Symbol.PyString( _ , e, _ ), restNow) ->
+                            nodes <- restAgain.Head :: nodes
+                            restAgain <- restNow
+                            end_pos <- e
+                            true
+                    |       Option.None -> false
+                    |       _ ->    false
+                do ()
+            String( start_pos, end_pos, List.toArray( List.rev nodes ) ), restAgain
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )

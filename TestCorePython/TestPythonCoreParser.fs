@@ -96,3 +96,22 @@ let ``Parse Expression rule 'atom' with Number literal`` () =
     let expecting = AbstractSyntaxNodes.Number( 10u, 13u, Symbol.PyNumber( 10u, 13u, "0xff" ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'atom' with single String literal`` () =
+    let stream = [ Symbol.PyString( 10u, 22u, "Hello, world!" );  ]
+    let node, rest  = stream |> ParseAtom
+    let expecting = AbstractSyntaxNodes.String( 10u, 22u, [| Symbol.PyString( 10u, 22u, "Hello, world!" ) |] );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'atom' with multiple String literal`` () =
+    let stream = [ Symbol.PyString( 10u, 22u, "Hello, world!" )
+                   Symbol.PyString( 26u, 30u, "Mimmi" ) ]
+    let node, rest  = stream |> ParseAtom
+    let expecting = AbstractSyntaxNodes.String( 10u, 30u, [|
+        Symbol.PyString( 10u, 22u, "Hello, world!" )
+        Symbol.PyString( 26u, 30u, "Mimmi" ) |] );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
