@@ -1,8 +1,7 @@
-module Tests
+module CorePython.Compiler.Parser.Tests
 
-open System
 open Xunit
-open CorePython.PythonCoreParser
+open CorePython.Compiler.PythonCoreParser
 
 
 // UnitTests for reserved keywords ////////////////////////////////////////////////////////////////////////////////////

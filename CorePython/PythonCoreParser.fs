@@ -1,6 +1,8 @@
-module CorePython.PythonCoreParser
 
-open System.Linq.Expressions
+// CorePython:  Parser for Python 3.11 language with tokenizer and needed struyctures
+//              Copyright (C) 2023 By Richard Magnor Stenbro   stenbror@hotmail.com
+
+module CorePython.Compiler.PythonCoreParser 
 
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
