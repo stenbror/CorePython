@@ -1,5 +1,7 @@
 module CorePython.PythonCoreParser
 
+open System.Linq.Expressions
+
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
 
@@ -100,8 +102,9 @@ type Symbol =
     |   Newline             of uint32 * uint32
     |   Indent
     |   Dedent
+    |   EOF                 of uint32
      
-type TokenStream = Symbol list
+type SymbolStream = Symbol list
 
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
@@ -196,3 +199,46 @@ let IsReservedKeywordSymbol(text: string, startPos: uint32) : Symbol option =
     |   "with"          -> Some( Symbol.PyWith( startPos, startPos + 4u ) )
     |   "yield"         -> Some( Symbol.PyYield( startPos, startPos + 5u ) )
     |   _               -> Option.None
+    
+// Parser utilities ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+let TryToken ( stream: SymbolStream ) : ( Symbol * SymbolStream ) option =
+    match stream with
+    |   symbol :: rest ->   Some(symbol, rest)
+    |   _ ->    None
+    
+let GetStartPosition ( stream: SymbolStream ) : uint =
+    if stream.Length > 0 then
+        match stream.Head with
+        |   Indent  |   Dedent  -> 0u
+        |   PyFalse( s, _ ) | PyNone( s, _ ) | PyTrue( s, _ ) | PyAnd( s, _ ) | PyAs( s, _ ) | PyAssert( s, _ )
+        |   PyAsync( s, _ ) | PyAwait( s, _ ) | PyBreak( s, _ ) | PyClass( s, _ ) | PyContinue( s, _ ) | PyDef( s, _ )
+        |   PyDel( s, _ ) | PyElif( s, _ ) | PyElse( s, _ ) | PyExcept( s, _ ) | PyFinally( s, _ ) | PyFor( s, _ )
+        |   PyFrom( s, _ ) | PyGlobal( s, _ ) | PyIf( s, _ ) | PyImport( s, _ ) | PyIn( s, _ ) | PyIs( s, _ )
+        |   PyLambda( s, _ ) | PyNonlocal( s, _ ) | PyNot( s, _ ) | PyOr( s, _ ) | PyPass( s, _ ) | PyRaise( s, _ )
+        |   PyReturn( s, _ ) | PyTry( s, _ ) | PyWhile( s, _ ) | PyWith( s, _ ) | PyYield( s, _ )
+                 -> s
+        |   PyPowerAssign( s, _ ) | PyPower( s, _ ) | PyMulAssign( s, _ ) | PyMul( s, _ ) | PyFloorDivAssign( s, _ )
+        |   PyFloorDiv( s, _ ) | PyDivAssign( s, _ ) | PyDiv( s, _ ) | PyShiftLeftAssign( s, _ ) | PyShiftLeft( s, _ )
+        |   PyLessEqual( s, _ ) | PyLess( s, _ ) | PyShiftRightAssign( s, _ ) | PyShiftRight( s, _ ) | PyGreaterEqual( s, _ )
+        |   PyGreater( s, _ ) | PyEllipsis( s, _ ) | PyDot( s, _ ) | PyPlusAssign( s, _ ) | PyPlus( s, _ ) | PyMinusAssign( s, _ )
+        |   PyMinus( s, _ ) | PyArrow( s, _ ) | PyModuloAssign( s, _ ) | PyModulo( s, _ ) | PyMatriceAssign( s, _ )
+        |   PyMatrice( s, _ ) | PyColonAssign( s, _ ) | PyColon( s, _ ) | PyBitwiseAndAssign( s, _ ) | PyBitwiseAnd( s, _ )
+        |   PyBitwiseOrAssign( s, _ ) | PyBitwiseOr( s, _ ) | PyBitwiseXorAssign( s, _ ) | PyBitwiseXor( s, _ )
+        |   PyBitwiseInvert( s, _ ) | PySemicolon( s, _ ) | PyComma( s, _ ) | PyEqual( s, _ ) | PyAssign( s, _ )
+        |   PyNotEqual( s, _ ) | PyLeftParen( s, _ ) | PyLeftBracket( s, _ ) | PyLeftCurly( s, _ ) | PyRightParen( s, _ )
+        |   PyRightBracket( s, _ ) | PyRightCurly( s, _ )
+                -> s
+        |   Name( s, _ , _ ) | Number( s, _ , _ ) | String( s, _ , _ ) -> s
+        |   Newline( s, _ ) -> s
+        |   EOF( s ) -> s
+        |   _  ->  0u
+    else 0u
+    
+
+    
+// Parser:  Expression rules //////////////////////////////////////////////////////////////////////////////////////////
+
+let rec ParseAtom() = ()
+
+and ParseAtomExpr() = ()
