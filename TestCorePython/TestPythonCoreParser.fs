@@ -134,3 +134,35 @@ let ``Parse Expression rule 'atom expr' with Name literal without await and trai
     let expecting = AbstractSyntaxNodes.Name( 10u, 17u, Symbol.PyName( 10u, 17u, "__init__" ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'power expr'`` () =
+    let stream = [ Symbol.PyName( 0u, 1u, "a" ); Symbol.PyPower( 2u, 3u ); Symbol.PyNumber( 4u, 5u, "8" ); ]
+    let node, rest  = stream |> ParsePower
+    let expecting = AbstractSyntaxNodes.Power( 0u, 5u, Name( 0u, 1u, PyName( 0u, 1u, "a") ), Symbol.PyPower( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'unary expr' with '+'`` () =
+    let stream = [ PyPlus( 2u, 3u ); PyNumber( 4u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseFactor
+    let expecting = AbstractSyntaxNodes.UnaryPlus( 2u, 5u, PyPlus( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'unary expr' with '-'`` () =
+    let stream = [ PyMinus( 2u, 3u ); PyNumber( 4u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseFactor
+    let expecting = AbstractSyntaxNodes.UnaryMinus( 2u, 5u, PyMinus( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'unary expr' with '~'`` () =
+    let stream = [ PyBitwiseInvert( 2u, 3u ); PyNumber( 4u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseFactor
+    let expecting = AbstractSyntaxNodes.BitwiseInvert( 2u, 5u, PyBitwiseInvert( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

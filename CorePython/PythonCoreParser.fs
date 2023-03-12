@@ -4,8 +4,6 @@
 
 module CorePython.Compiler.PythonCoreParser
 
-open System.IO 
-
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
 
@@ -118,8 +116,10 @@ type AbstractSyntaxNodes =
     |   Number          of uint32 * uint32 * Symbol
     |   String          of uint32 * uint32 * Symbol array
     |   AtomExpr        of uint32 * uint32 * Symbol option * AbstractSyntaxNodes * AbstractSyntaxNodes array option
-    
-
+    |   Power           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   UnaryPlus       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   UnaryMinus      of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   BitwiseInvert   of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -319,9 +319,33 @@ and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
                 |   _ ->
                     AtomExpr( start_pos, GetNodeEndPosition(Array.last trailer), awaitOp, right, Some( trailer ) ), restAgain
 
-and ParsePower( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParsePower( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition(stream)
+    let left, rest = ParseAtomExpr stream
+    match TryToken rest with
+    |  Some( PyPower( _ ), rest2 ) ->
+            let op = List.head rest
+            let right, rest3 = ParseFactor rest2
+            Power(start_pos, GetNodeEndPosition( right ), left, op, right), rest3
+    |  _ -> left, rest
 
-and ParseFactor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseFactor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition(stream)
+    match TryToken stream with
+    |  Some( PyPlus( _ ), rest ) ->
+            let op = List.head stream
+            let right, rest2 = ParseFactor rest
+            UnaryPlus( start_pos, GetNodeEndPosition( right ), op, right ), rest2
+    |  Some( PyMinus( _ ), rest ) ->
+            let op = List.head stream
+            let right, rest2 = ParseFactor rest
+            UnaryMinus( start_pos, GetNodeEndPosition( right ), op, right  ), rest2
+    |  Some( PyBitwiseInvert( _ ), rest ) ->
+            let op = List.head stream
+            let right, rest2 = ParseFactor rest
+            BitwiseInvert( start_pos, GetNodeEndPosition( right ), op, right ), rest2
+    |  _ ->
+            ParsePower stream
 
 and ParseTerm( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
