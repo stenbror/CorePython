@@ -300,3 +300,93 @@ let ``Parse Expression rule 'star expr'`` () =
     let expecting = AbstractSyntaxNodes.StarExpr( 2u, 5u, PyMul( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '<'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyLess( 2u, 2u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.Less( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyLess( 2u, 2u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '>'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyGreater( 2u, 2u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.Greater( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyGreater( 2u, 2u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '<='`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyLessEqual( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.LessEqual( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyLessEqual( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '>='`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyGreaterEqual( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.GreaterEqual( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyGreaterEqual( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '=='`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyEqual( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.Equal( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyEqual( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator '!='`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyNotEqual( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.NotEqual( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyNotEqual( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator 'in'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyIn( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.In( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyIn( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator 'is'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyIs( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.Is( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyIs( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator 'is not'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyIs( 2u, 3u ); Symbol.PyNot( 5u, 7u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.IsNot( 0u, 9u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyIs( 2u, 3u ), Symbol.PyNot( 5u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison' with single operator 'not in'`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyNot( 2u, 4u ); Symbol.PyIn( 6u, 7u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.NotIn( 0u, 9u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyNot( 2u, 4u ), Symbol.PyIn( 6u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'comparison expr' with multiple operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyLess( 2u, 2u ); Symbol.PyNumber( 4u, 4u, "8" ); Symbol.PyGreaterEqual( 6u, 7u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseComparison
+    let expecting = AbstractSyntaxNodes.GreaterEqual( 0u, 9u,
+            Less( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyLess( 2u, 2u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) ),
+            Symbol.PyGreaterEqual( 6u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
