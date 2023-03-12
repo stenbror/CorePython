@@ -1,5 +1,5 @@
 
-// CorePython:  Parser for Python 3.11 language with tokenizer and needed struyctures
+// CorePython:  Parser for Python 3.11 language with tokenizer and needed structures
 //              Copyright (C) 2023 By Richard Magnor Stenbro   stenbror@hotmail.com
 
 module CorePython.Compiler.PythonCoreParser 
@@ -7,10 +7,6 @@ module CorePython.Compiler.PythonCoreParser
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
 
-
-// Nodes generated during parsing of source code //////////////////////////////////////////////////////////////////////
-type AbstractSyntaxNodes =
-    |   Empty
 
 // Lexical symbols used by parser from lexer //////////////////////////////////////////////////////////////////////////
 type Symbol =
@@ -97,9 +93,9 @@ type Symbol =
     |   PyRightParen        of uint32 * uint32
     |   PyRightBracket      of uint32 * uint32
     |   PyRightCurly        of uint32 * uint32
-    |   Name                of uint32 * uint32 * string
-    |   Number              of uint32 * uint32 * string
-    |   String              of uint32 * uint32 * string array
+    |   PyName              of uint32 * uint32 * string
+    |   PyNumber            of uint32 * uint32 * string
+    |   PyString            of uint32 * uint32 * string array
     |   TypeComment         of uint32 * uint32 * string
     |   Newline             of uint32 * uint32
     |   Indent
@@ -107,6 +103,19 @@ type Symbol =
     |   EOF                 of uint32
      
 type SymbolStream = Symbol list
+
+
+// Nodes generated during parsing of source code //////////////////////////////////////////////////////////////////////
+type AbstractSyntaxNodes =
+    |   Empty
+    |   False           of uint32 * uint32 * Symbol
+    |   None            of uint32 * uint32 * Symbol 
+    |   True            of uint32 * uint32 * Symbol
+    |   Ellipsis        of uint32 * uint32 * Symbol
+    |   Name            of uint32 * uint32 * Symbol
+    |   Number          of uint32 * uint32 * Symbol
+    |   String          of uint32 * uint32 * Symbol
+    
 
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
@@ -161,7 +170,7 @@ let IsOperatorOrDelimiterSymbol( values : (char * char * char), startPos: uint32
     |   ( ')', _ , _ )      -> Some( Symbol.PyRightParen( startPos, startPos + 1u), 1uy )
     |   ( ']', _ , _ )      -> Some( Symbol.PyRightBracket( startPos, startPos + 1u), 1uy )
     |   ( '}', _ , _ )      -> Some( Symbol.PyRightCurly( startPos, startPos + 1u), 1uy )
-    |   _                   -> None 
+    |   _                   -> Option.None 
 
 let IsReservedKeywordSymbol(text: string, startPos: uint32) : Symbol option =
     match text with
@@ -207,7 +216,7 @@ let IsReservedKeywordSymbol(text: string, startPos: uint32) : Symbol option =
 let TryToken ( stream: SymbolStream ) : ( Symbol * SymbolStream ) option =
     match stream with
     |   symbol :: rest ->   Some(symbol, rest)
-    |   _ ->    None
+    |   _ ->    Option.None
     
 let GetStartPosition ( stream: SymbolStream ) : uint =
     if stream.Length > 0 then
@@ -231,7 +240,7 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
         |   PyNotEqual( s, _ ) | PyLeftParen( s, _ ) | PyLeftBracket( s, _ ) | PyLeftCurly( s, _ ) | PyRightParen( s, _ )
         |   PyRightBracket( s, _ ) | PyRightCurly( s, _ )
                 -> s
-        |   Name( s, _ , _ ) | Number( s, _ , _ ) | String( s, _ , _ ) -> s
+        |   PyName( s, _ , _ ) | PyNumber( s, _ , _ ) | PyString( s, _ , _ ) -> s
         |   Newline( s, _ ) -> s
         |   EOF( s ) -> s
         |   _  ->  0u
@@ -241,6 +250,6 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
     
 // Parser:  Expression rules //////////////////////////////////////////////////////////////////////////////////////////
 
-let rec ParseAtom() = ()
+let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseAtomExpr() = ()
+and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
