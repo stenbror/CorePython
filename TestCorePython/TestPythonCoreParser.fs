@@ -292,3 +292,11 @@ let ``Parse Expression rule 'or expr' with multiple operator`` () =
             Symbol.PyBitwiseOr( 6u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'star expr'`` () =
+    let stream = [ PyMul( 2u, 3u ); PyNumber( 4u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseStarExpr
+    let expecting = AbstractSyntaxNodes.StarExpr( 2u, 5u, PyMul( 2u, 3u ), Number( 4u, 5u, PyNumber( 4u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

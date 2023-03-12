@@ -132,6 +132,7 @@ type AbstractSyntaxNodes =
     |   BitwiseAnd      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   BitwiseXor      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   BitwiseOr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   StarExpr        of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -480,7 +481,13 @@ and ParseOrExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream )
             do ()
     left, rest
 
-and ParseStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    match TryToken stream with
+    |  Some( PyMul( _ ), rest ) ->
+            let op = List.head stream
+            let right, rest2 = ParseOrExpr rest
+            StarExpr( GetStartPosition(stream), GetNodeEndPosition( right ), op, right ), rest2
+    |  _ -> raise (SyntaxError( GetStartPosition( stream ), "Expecting '*' in star expression!" ))
 
 and ParseComparison( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
