@@ -44,3 +44,15 @@ let ``Operator or delimiter '*='`` () =
 let ``Operator or delimiter '*'`` () =
     let res = IsOperatorOrDelimiterSymbol( ( '*', ' ', ' ' ), 5u )
     Assert.True( match res with | Some( Symbol.PyMul(5u, 6u), 1uy ) -> true | _ -> false )
+    
+    
+    
+// UnitTests for expression rules of parser ///////////////////////////////////////////////////////////////////////////
+
+[<Fact>]
+let ``Parse Expression rule 'atom' with Name literal`` () =
+    let stream = [ Symbol.PyName( 10u, 17u, "__init__" );  ]
+    let node, rest  = stream |> ParseAtom
+    let expecting = AbstractSyntaxNodes.Name( 10u, 17u, Symbol.PyName( 10u, 17u, "__init__" ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

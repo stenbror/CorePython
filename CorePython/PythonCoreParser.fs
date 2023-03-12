@@ -250,6 +250,9 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
     
 // Parser:  Expression rules //////////////////////////////////////////////////////////////////////////////////////////
 
-let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    match TryToken stream with
+    |   Some ( PyName( s, e, _  ), rest ) ->   Name( s, e, List.head stream ) , rest
+    | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
