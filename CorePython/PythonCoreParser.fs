@@ -133,6 +133,16 @@ type AbstractSyntaxNodes =
     |   BitwiseXor      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   BitwiseOr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   StarExpr        of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   Less            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   LessEqual       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Equal           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   GreaterEqual    of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Greater         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NotEqual        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   In              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Is              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NotIn           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
+    |   IsNot           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -489,7 +499,79 @@ and ParseStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
             StarExpr( GetStartPosition(stream), GetNodeEndPosition( right ), op, right ), rest2
     |  _ -> raise (SyntaxError( GetStartPosition( stream ), "Expecting '*' in star expression!" ))
 
-and ParseComparison( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseComparison( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition(stream)
+    let mutable left, rest = ParseOrExpr stream
+    while   match TryToken rest with
+            |  Some( PyLess( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- Less( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyLessEqual( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- LessEqual( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyEqual( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- Equal( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyGreaterEqual( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- GreaterEqual( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyGreater( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- Greater( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyNotEqual( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- NotEqual( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyIn( _ ), rest2 ) ->
+                        let op = List.head rest
+                        let right, rest3 = ParseOrExpr rest2
+                        left <- In( start_pos, GetNodeEndPosition( right ), left, op, right )
+                        rest <- rest3
+                        true
+            |  Some( PyNot( _ ), rest2 ) ->
+                        let op = List.head rest
+                        match TryToken rest2 with
+                        |  Some( PyIn( _ ), rest3) ->
+                                let op2 = List.head rest2
+                                let right, rest4 = ParseOrExpr rest3
+                                left <- NotIn( start_pos, GetNodeEndPosition( right ), left, op, op2, right )
+                                rest <- rest4
+                        |  _ ->
+                                raise ( SyntaxError(GetStartPosition(rest2), "Missing 'in' in 'not in' expression!" ))
+                        true
+            |  Some( PyIs( _ ), rest2 ) ->
+                        let op = List.head rest
+                        match TryToken rest2 with 
+                        |  Some( PyNot( _ ), rest3) ->
+                                let op2 = List.head rest2
+                                let right, rest4 = ParseOrExpr rest3
+                                left <- IsNot( start_pos, GetNodeEndPosition( right ), left, op, op2, right  )
+                                rest <- rest4
+                        |  _ ->
+                               let right, rest3 = ParseOrExpr rest2
+                               left <- Is( start_pos, GetNodeEndPosition( right ), left, op, right )
+                               rest <- rest3 
+                        true
+            |  _ -> false
+        do ()
+    left, rest
 
 and ParseNotTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
