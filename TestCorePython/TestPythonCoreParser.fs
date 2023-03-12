@@ -274,3 +274,21 @@ let ``Parse Expression rule 'xor expr' with multiple operator`` () =
             Symbol.PyBitwiseXor( 6u, 8u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'or expr' with single operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseOr( 2u, 3u ); Symbol.PyNumber( 5u, 5u, "8" ); ]
+    let node, rest  = stream |> ParseOrExpr
+    let expecting = AbstractSyntaxNodes.BitwiseOr( 0u, 5u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseOr( 2u, 3u ), Number( 5u, 5u, PyNumber( 5u, 5u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'or expr' with multiple operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyBitwiseOr( 2u, 3u ); Symbol.PyNumber( 4u, 4u, "8" ); Symbol.PyBitwiseOr( 6u, 7u ); Symbol.PyNumber( 9u, 9u, "8" ); ]
+    let node, rest  = stream |> ParseOrExpr
+    let expecting = AbstractSyntaxNodes.BitwiseOr( 0u, 9u,
+            BitwiseOr( 0u, 4u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyBitwiseOr( 2u, 3u ), Number( 4u, 4u, PyNumber( 4u, 4u, "8" ) ) ),
+            Symbol.PyBitwiseOr( 6u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
