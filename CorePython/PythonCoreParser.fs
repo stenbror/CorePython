@@ -149,6 +149,8 @@ type AbstractSyntaxNodes =
     |   Lambda          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * AbstractSyntaxNodes
     |   Test            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   NamedExpr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   YieldExpr       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   YieldFrom       of uint32 * uint32 * Symbol * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -701,7 +703,22 @@ and ParseVFPDef( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream )
             |   _ ->  Empty, stream // Never happens!
     |   _ ->   raise (SyntaxError(GetStartPosition stream, "Expecting Name literal in list!"))
 
-and ParseyieldExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseYieldExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyYield( _ ), rest) ->
+          let op1 = List.head stream
+          match TryToken rest with
+          |  Some( PyFrom( _ ), rest2) ->
+                let op2 = List.head rest
+                let right, rest3 = ParseTest rest2
+                YieldFrom( start_pos, GetNodeEndPosition right, op1, op2, right ), rest3
+          |  _ ->
+                let right, rest4 = ParseTestListStarExpr rest
+                YieldExpr( start_pos, GetNodeEndPosition right, op1, right ), rest4
+    |  _ -> raise (SyntaxError(GetStartPosition stream, "Expecting 'yield' expression!"))
+    
+and ParseTestListStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
 
 // Parser: Statement rules ////////////////////////////////////////////////////////////////////////////////////////////
