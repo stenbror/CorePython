@@ -724,7 +724,34 @@ and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolS
 
 and ParseSubscript( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseTestList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTestList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators: Symbol List = List.Empty
+    let mutable node, rest = ParseTest stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    while match TryToken rest with
+          |  Some( PyComma( _ , e ), rest2 ) ->
+               separators <- List.head rest :: separators
+               end_pos <- e
+               match TryToken rest2 with
+               |  Some( PySemicolon( _ ), _ )
+               |  Some( Newline( _ ), _ )
+               |  Some( EOF( _ ), _ ) ->
+                    rest <- rest2
+                    false
+               |  _ ->
+                    let node2, rest3 = ParseTest rest2
+                    rest <- rest3
+                    nodes <- node2 :: nodes
+                    end_pos <- GetNodeEndPosition node2
+                    true
+          |  _ -> false
+       do ()
+    
+    TestList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
 
 and ParseExprList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
