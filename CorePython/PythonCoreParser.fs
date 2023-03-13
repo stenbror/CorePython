@@ -152,6 +152,9 @@ type AbstractSyntaxNodes =
     |   YieldExpr           of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     |   YieldFrom           of uint32 * uint32 * Symbol * Symbol * AbstractSyntaxNodes
     |   TestListStarExpr    of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   VarArgsList         of uint32 * uint32 * Symbol option * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option * AbstractSyntaxNodes array * Symbol array
+    |   VFPDefAssign        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   TestList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -670,7 +673,49 @@ and ParseNamedExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStrea
     | _ ->
          left, rest
 
-and ParseTestListComp( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTestListComp( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    let node, rest = match TryToken stream with
+                     |   Some( PyMul( _ ), _ ) -> ParseStarExpr stream
+                     |   _ ->   ParseNamedExpr stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    let mutable rest2 = rest
+    match TryToken rest2 with
+    |   Some( PyFor( _ ), _ )
+    |   Some( PyAsync( _ ), _ ) ->
+            let node2, rest3 = ParseCompFor rest2
+            nodes <- node2 :: nodes
+            rest2 <- rest3
+            end_pos <- GetNodeEndPosition node2
+    |   _ ->
+            while   match TryToken rest2 with
+                    |  Some( PyComma( _ , e ), rest4 ) ->
+                          separators <- List.head rest :: separators
+                          end_pos <- e
+                          match TryToken rest4 with
+                          |  Some( PyRightParen( _ ), _ )
+                          |  Some( PyRightBracket( _ ), _ ) ->
+                                rest2 <- rest4
+                                false
+                          |  Some( PyComma( _ , e ), _ ) ->
+                                raise ( SyntaxError( e, "Unexpected ',' in list!") )
+                          |  _ ->
+                                let node2, rest5 =
+                                       match TryToken rest4 with
+                                       |   Some( PyMul( _ ), _ ) -> ParseStarExpr stream
+                                       |   _ ->   ParseNamedExpr stream
+                                rest2 <- rest5
+                                nodes <- node2 :: nodes
+                                end_pos <- GetNodeEndPosition node2
+                                true
+                    |   _ -> false
+               do ()
+               
+    TestList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest2
 
 and ParseTrailer( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
@@ -692,7 +737,21 @@ and ParseCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream 
 
 and ParseCompIf( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseVarArgsList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseVarArgsList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable mulOp : Symbol option = Option.None
+    let mutable powerOp : Symbol option = Option.None
+    let mutable mulNode : AbstractSyntaxNodes option = Option.None
+    let mutable powerNode : AbstractSyntaxNodes option = Option.None
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    let mutable rest = stream
+    
+    // Insert code for grammar here!
+    
+    VarArgsList( start_pos, end_pos, mulOp, mulNode, powerOp, powerNode,
+                            List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
 
 and ParseVFPDef( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
