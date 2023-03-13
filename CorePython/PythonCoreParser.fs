@@ -163,6 +163,8 @@ type AbstractSyntaxNodes =
     |   CompSyncFor         of uint32 * uint32 * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * AbstractSyntaxNodes
     |   CompFor             of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     |   CompIf              of uint32 * uint32 * Symbol * AbstractSyntaxNodes * AbstractSyntaxNodes
+    |   DictionaryContainer of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   SetContainer        of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -863,7 +865,22 @@ and ParseExprList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
     
     ExprList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separarors) ), rest
 
-and ParseDictionaryOrSetMaker( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseDictionaryOrSetMaker( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable key : AbstractSyntaxNodes = Empty
+    let mutable symbol : Symbol = Symbol.Empty
+    let mutable value : AbstractSyntaxNodes = Empty
+    let mutable isDictionary = true
+    let mutable rest = stream
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    
+    // Insert code for grammar handling here!
+    
+    match isDictionary with
+        |    true ->    DictionaryContainer( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
+        |    _ ->       SetContainer( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
 
 and ParseCompIter( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     match TryToken stream with
