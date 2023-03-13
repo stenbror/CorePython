@@ -364,6 +364,30 @@ let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
                             let op2 = List.head rest12
                             List( start_pos, e, op1, Some( node20 ), op2), rest13
                     |   _ ->  raise (SyntaxError(GetStartPosition rest12, "Expecting ']' in list!"))
+    |   Some( PyLeftCurly( _ ), rest) ->
+            let start_pos = GetStartPosition(stream)
+            let op1 = List.head stream
+            match TryToken rest with
+            |   Some( PyRightCurly( _ , e ), rest2) ->
+                    let op2 = List.head rest
+                    Dictionary( start_pos, e, op1, Option.None, op2), rest2
+            |   _ ->
+                    let node30, rest15 = ParseDictionaryOrSetMaker rest
+                    match node30 with
+                    |   DictionaryContainer( _ ) ->
+                            match TryToken rest15 with
+                            |   Some( PyRightCurly( _ , e ), rest16) ->
+                                    let op2 = List.head rest15
+                                    Dictionary( start_pos, e, op1, Some( node30 ), op2), rest16
+                            |   _ ->  raise (SyntaxError(GetStartPosition rest15, "Expecting '}' in dictionary!"))
+                    |   SetContainer( _ ) ->
+                            match TryToken rest15 with
+                            |   Some( PyRightCurly( _ , e ), rest17) ->
+                                    let op2 = List.head rest15
+                                    Set( start_pos, e, op1, Some( node30 ), op2), rest17
+                            |   _ ->  raise (SyntaxError(GetStartPosition rest15, "Expecting '}' in set!"))
+                    |   _ ->
+                            raise (SyntaxError(GetStartPosition rest, "Expecting dictionary or set!")) 
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
