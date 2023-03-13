@@ -146,6 +146,7 @@ type AbstractSyntaxNodes =
     |   NotTest         of uint32 * uint32 * Symbol * AbstractSyntaxNodes
     |   AndTest         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   OrTest          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Lambda          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -613,7 +614,23 @@ and ParseOrTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream )
             do ()
     left, rest
 
-and ParseLambda( stream: SymbolStream, isCond: bool ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseLambda( stream: SymbolStream, isCond: bool ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyLambda( _ ), rest) ->
+         let op = List.head stream
+         let left, rest2 =  match TryToken rest with
+                            |  Some( PyColon( _ ), _ ) -> Option.None, rest
+                            |  _ ->
+                                let a, b = ParseVarArgsList rest
+                                Some( a ), b
+         match TryToken rest2 with
+         |  Some( PyColon( _ ), rest4) ->
+              let op2 = List.head rest2
+              let right, rest3 =  match isCond with | true -> ParseTest rest4 | false -> ParseTestNoCond rest4
+              Lambda( start_pos, GetNodeEndPosition right, op, left, op2, right), rest3
+         |  _ ->    raise(SyntaxError(GetStartPosition rest2, "Expecting ':' in 'lambda' expression!"))
+    |  _ ->  raise (SyntaxError(GetStartPosition stream, "Expecting 'lambda' expression!"))
 
 and ParseTestNoCond( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
