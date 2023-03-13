@@ -156,6 +156,7 @@ type AbstractSyntaxNodes =
     |   VFPDefAssign        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   TestList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   ExprList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   SubscriptList       of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -720,7 +721,32 @@ and ParseTestListComp( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolSt
 
 and ParseTrailer( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    let mutable node, rest = ParseSubscript stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    while   match TryToken rest with
+            |  Some( PyComma( _ , e ), rest2 ) ->
+                 separators <- List.head rest :: separators
+                 end_pos <- e
+                 match TryToken rest2 with
+                 |  Some( PyRightBracket( _ ), _ ) ->
+                       rest <- rest2
+                       false
+                 |  _ ->
+                       let node2, rest3 = ParseSubscript rest2
+                       nodes <- node2 :: nodes
+                       rest <- rest3
+                       end_pos <- GetNodeEndPosition node2
+                       true
+            |  _ -> false
+       do ()
+    
+    SubscriptList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
 
 and ParseSubscript( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
