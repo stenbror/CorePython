@@ -160,6 +160,9 @@ type AbstractSyntaxNodes =
     |   ExprList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   SubscriptList       of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   Subscript           of uint32 * uint32 * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option
+    |   CompSyncFor         of uint32 * uint32 * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * AbstractSyntaxNodes
+    |   CompFor             of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   CompIf              of uint32 * uint32 * Symbol * AbstractSyntaxNodes * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -867,14 +870,48 @@ and ParseCompIter( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
         |  Some( PyFor( _ ), _ )
         |  Some( PyAsync( _ ), _ )  ->  ParseCompFor stream
         |  Some( PyIf( _ ), _ )     ->  ParseCompIf stream
-        |  _                        ->  raise(SyntaxError( ( GetStartPosition stream ),
-                                                          "Expecting 'for', 'async' ir 'if' in comprehension"))
+        |  _                        ->  Empty, stream
 
-and ParseSyncCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseSyncCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyFor( _ ), rest ) ->
+          let op1 = List.head stream
+          let left, rest2 = ParseExprList rest
+          match TryToken rest2 with
+          |  Some( PyIn( _ ), rest3 ) ->
+                let op2 = List.head rest2
+                let right, rest4 = ParseOrTest rest3
+                let next, rest5 = ParseCompIter rest4
+                match next with
+                |   Empty   ->  CompSyncFor( start_pos, GetNodeEndPosition right, op1, left, op2, right, next), rest5
+                |   _       ->  CompSyncFor( start_pos, GetNodeEndPosition next, op1, left, op2, right, next), rest5
+                
+          |  _ ->  raise (SyntaxError(GetStartPosition rest2, "Expecting 'in' in 'for' comprehension expression!"))
+    |  _ -> raise (SyntaxError(GetStartPosition stream, "Expecting 'for' in 'for' comprehension expression!"))
 
-and ParseCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyAsync( _ ), rest ) ->
+         let op = List.head stream
+         let right, rest2 = ParseSyncCompFor rest
+         CompFor( start_pos, GetNodeEndPosition right, op, right), rest2
+         
+    |  _ -> ParseSyncCompFor stream
 
-and ParseCompIf( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseCompIf( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |   Some( PyIf( _ ), rest ) ->
+            let op = List.head stream
+            let right, rest2 = ParseTestNoCond rest
+            let next, rest3 = ParseCompIter rest2
+            match next with
+            |   Empty   ->  CompIf( start_pos, GetNodeEndPosition right, op, right, next), rest3
+            |   _       ->  CompIf( start_pos, GetNodeEndPosition next, op, right, next), rest3
+            
+    |   _ ->   raise (SyntaxError(GetStartPosition stream, "Expecting 'if' in comprehension expression!"))
 
 and ParseVarArgsList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
