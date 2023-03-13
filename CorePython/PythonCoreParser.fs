@@ -155,6 +155,7 @@ type AbstractSyntaxNodes =
     |   VarArgsList         of uint32 * uint32 * Symbol option * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option * AbstractSyntaxNodes array * Symbol array
     |   VFPDefAssign        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   TestList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   ExprList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -723,9 +724,38 @@ and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolS
 
 and ParseSubscript( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseExprList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
-
 and ParseTestList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+
+and ParseExprList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separarors: Symbol List = List.Empty
+    let mutable node, rest = match TryToken stream with
+                             | Some( PyMul( _ ), _ ) -> ParseStarExpr stream
+                             | _ -> ParseOrTest stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    while match TryToken rest with
+          |  Some( PyComma( _ , e ), rest2 ) ->
+               separarors <- List.head rest :: separarors
+               end_pos <- e
+               match TryToken rest2 with
+               |  Some( PyIn( _ ), _ ) ->
+                    rest <- rest2
+                    false
+               |  _ ->
+                    let node2, rest3 = match TryToken rest2 with
+                                       | Some( PyMul( _ ), _ ) -> ParseStarExpr rest2
+                                       | _ -> ParseOrTest rest2
+                    nodes <- node2 :: nodes
+                    rest <- rest3
+                    end_pos <- GetNodeEndPosition node2
+                    true
+          |  _ -> false
+       do ()
+    
+    ExprList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separarors) ), rest
 
 and ParseDictionaryOrSetMaker( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
