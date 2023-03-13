@@ -656,7 +656,16 @@ and ParseTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
        |  _ ->
             left, rest
 
-and ParseNamedExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseNamedExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let left, rest = ParseTest stream
+    match TryToken rest with
+    |  Some( PyColonAssign( _ ), rest2 ) ->
+         let op = List.head rest
+         let right, rest3 = ParseTest rest2
+         NamedExpr( start_pos, GetNodeEndPosition right, left, op, right) , rest3
+    | _ ->
+         left, rest
 
 and ParseTestListComp( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
