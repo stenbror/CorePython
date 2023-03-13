@@ -691,6 +691,16 @@ and ParseCompIf( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream )
 
 and ParseVarArgsList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
+and ParseVFPDef( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |   Some( PyName( _ ), rest ) ->
+            let name = List.head stream
+            match name with
+            |   PyName( _, e , _ ) -> Name( start_pos, e, name ) , rest
+            |   _ ->  Empty, stream // Never happens!
+    |   _ ->   raise (SyntaxError(GetStartPosition stream, "Expecting Name literal in list!"))
+
 and ParseyieldExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
 
