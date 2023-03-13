@@ -1110,7 +1110,31 @@ and ParseTestListStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * Symb
     TestListStarExpr( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
     
 and ParseArgList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
-    ( Empty, stream )
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    let mutable node, rest = ParseArgument stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    while   match TryToken rest with
+            |  Some( PyComma( _ ), rest2 ) ->
+                 separators <- List.head rest :: separators
+                 match TryToken rest2 with
+                 |  Some( PyRightParen( _, e ), _ ) ->
+                       rest <- rest2
+                       end_pos <- e
+                       false
+                 |  _ ->
+                       let node2, rest3 = ParseArgument rest2
+                       nodes <- node2 :: nodes
+                       rest <- rest3
+                       end_pos <- GetNodeEndPosition node2
+                       true
+            |  _ -> false
+       do ()
+    
+    ArgumentList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
     
 and ParseArgument( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
