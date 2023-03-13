@@ -599,7 +599,19 @@ and ParseAndTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream 
             do ()
     left, rest
 
-and ParseOrTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseOrTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable left, rest = ParseAndTest stream
+    while   match TryToken rest with
+            |  Some( PyOr( _ ), rest2) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseAndTest rest2
+                    left <- OrTest( start_pos, GetNodeEndPosition right, left, op, right )
+                    rest <- rest3
+                    true
+            | _ -> false
+            do ()
+    left, rest
 
 and ParseLambda( stream: SymbolStream, isCond: bool ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
