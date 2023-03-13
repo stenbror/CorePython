@@ -147,6 +147,8 @@ type AbstractSyntaxNodes =
     |   AndTest         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   OrTest          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Lambda          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * AbstractSyntaxNodes
+    |   Test            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NamedExpr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -635,7 +637,24 @@ and ParseLambda( stream: SymbolStream, isCond: bool ) : ( AbstractSyntaxNodes * 
 and ParseTestNoCond( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     match TryToken stream with | Some( PyLambda( _ ), _ ) -> ParseLambda( stream, false ) |  _ -> ParseOrTest stream
 
-and ParseTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyLambda( _ ), _ ) -> ParseLambda( stream, true )
+    | _ ->
+       let left, rest = ParseOrTest stream
+       match TryToken rest with
+       |  Some( PyIf( _ ), rest2) ->
+               let op1 = List.head rest
+               let right, rest3 = ParseOrTest rest2
+               match TryToken rest3 with
+               |  Some( PyElse( _ ), rest4 ) ->
+                    let op2 = List.head rest3
+                    let next, rest5 = ParseTest rest4
+                    Test( start_pos, GetNodeEndPosition next, left, op1, right, op2, next ), rest5
+               | _ ->  raise(SyntaxError(GetStartPosition rest3, "Expecting 'else' in test expression!"))
+       |  _ ->
+            left, rest
 
 and ParseNamedExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
