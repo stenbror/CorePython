@@ -335,21 +335,35 @@ let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
                 do ()
             String( start_pos, end_pos, List.toArray( List.rev nodes ) ), restAgain
     |   Some( PyLeftParen( _ ), rest) ->
-                let start_pos = GetStartPosition(stream)
-                let op1 = List.head stream
-                match TryToken rest with
-                |   Some( PyRightParen( _, e ), rest2) ->
-                        let op2 = List.head rest
-                        Tuple( start_pos, e, op1, Option.None, op2), rest2
-                |   _ ->
-                        let node10, rest10 =    match TryToken rest with
-                                                |   Some( PyYield( _ ), _ ) -> ParseYieldExpr rest
-                                                |   _ ->  ParseTestListComp rest
-                        match TryToken rest10 with
-                        |   Some( PyRightParen( _ , e ), rest11) ->
-                                let op2 = List.head rest10
-                                Tuple( start_pos, e, op1, Some( node10 ), op2 ), rest11
-                        |   _ ->   raise (SyntaxError(GetStartPosition rest10, "Expecting ')' in tuple!"))
+            let start_pos = GetStartPosition(stream)
+            let op1 = List.head stream
+            match TryToken rest with
+            |   Some( PyRightParen( _, e ), rest2) ->
+                    let op2 = List.head rest
+                    Tuple( start_pos, e, op1, Option.None, op2), rest2
+            |   _ ->
+                    let node10, rest10 =    match TryToken rest with
+                                            |   Some( PyYield( _ ), _ ) -> ParseYieldExpr rest
+                                            |   _ ->  ParseTestListComp rest
+                    match TryToken rest10 with
+                    |   Some( PyRightParen( _ , e ), rest11) ->
+                            let op2 = List.head rest10
+                            Tuple( start_pos, e, op1, Some( node10 ), op2 ), rest11
+                    |   _ ->   raise (SyntaxError(GetStartPosition rest10, "Expecting ')' in tuple!"))
+    |   Some( PyLeftBracket( _ ), rest) ->
+            let start_pos = GetStartPosition(stream)
+            let op1 = List.head stream
+            match TryToken rest with
+            |   Some( PyRightBracket( _ , e ), rest2) ->
+                    let op2 = List.head rest
+                    List( start_pos, e, op1, Option.None, op2), rest2
+            |   _ ->
+                    let node20, rest12 = ParseTestListComp rest
+                    match TryToken rest12 with
+                    |   Some( PyRightBracket( _ , e ), rest13) ->
+                            let op2 = List.head rest12
+                            List( start_pos, e, op1, Some( node20 ), op2), rest13
+                    |   _ ->  raise (SyntaxError(GetStartPosition rest12, "Expecting ']' in list!"))
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
