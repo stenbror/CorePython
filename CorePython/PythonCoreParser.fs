@@ -632,7 +632,8 @@ and ParseLambda( stream: SymbolStream, isCond: bool ) : ( AbstractSyntaxNodes * 
          |  _ ->    raise(SyntaxError(GetStartPosition rest2, "Expecting ':' in 'lambda' expression!"))
     |  _ ->  raise (SyntaxError(GetStartPosition stream, "Expecting 'lambda' expression!"))
 
-and ParseTestNoCond( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTestNoCond( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    match TryToken stream with | Some( PyLambda( _ ), _ ) -> ParseLambda( stream, false ) |  _ -> ParseOrTest stream
 
 and ParseTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
