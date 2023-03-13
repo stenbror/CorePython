@@ -143,6 +143,9 @@ type AbstractSyntaxNodes =
     |   Is              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   NotIn           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
     |   IsNot           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
+    |   NotTest         of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   AndTest         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   OrTest          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -274,7 +277,7 @@ let GetStartPosition ( stream: SymbolStream ) : uint =
     
 let GetNodeEndPosition( node: AbstractSyntaxNodes ) : uint32 =
     match node with
-    |   Name( _ , e , _ ) | Number( _ , e , _ ) | String( _ , e , _ )
+    |   Name( _ , e , _ ) | Number( _ , e , _ ) | String( _ , e , _ ) | NotTest( _ , e , _ , _  )
     |   AtomExpr( _ , e , _ , _ , _  ) ->   e
     |   _   -> 0ul
     
@@ -573,7 +576,14 @@ and ParseComparison( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStre
         do ()
     left, rest
 
-and ParseNotTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseNotTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyNot( _ ), rest) ->
+            let op = List.head stream
+            let right, rest2 = ParseNotTest rest
+            NotTest( start_pos, GetNodeEndPosition( right ), op, right ), rest2
+    |  _ -> ParseComparison stream
 
 and ParseAndTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 

@@ -390,3 +390,19 @@ let ``Parse Expression rule 'comparison expr' with multiple operator`` () =
             Symbol.PyGreaterEqual( 6u, 7u ), Number( 9u, 9u, PyNumber( 9u, 9u, "8" ) ));
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'not test' with single operator`` () =
+    let stream = [ Symbol.PyNot( 0u, 2u ); Symbol.PyName( 4u, 5u, "ab" ); ]
+    let node, rest  = stream |> ParseNotTest
+    let expecting = AbstractSyntaxNodes.NotTest( 0u, 5u, Symbol.PyNot( 0u, 2u ), Name( 4u, 5u, PyName( 4u, 5u, "ab" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'not test' with multiple operator`` () =
+    let stream = [ Symbol.PyNot( 0u, 2u ); Symbol.PyNot( 4u, 6u ); Symbol.PyName( 8u, 9u, "ab" ); ]
+    let node, rest  = stream |> ParseNotTest
+    let expecting = AbstractSyntaxNodes.NotTest( 0u, 9u, Symbol.PyNot( 0u, 2u ), NotTest( 4u, 9u, Symbol.PyNot( 4u, 6u ), Name( 8u, 9u, PyName( 8u, 9u, "ab" ) ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
