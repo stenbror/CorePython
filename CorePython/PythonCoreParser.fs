@@ -165,6 +165,13 @@ type AbstractSyntaxNodes =
     |   CompIf              of uint32 * uint32 * Symbol * AbstractSyntaxNodes * AbstractSyntaxNodes
     |   DictionaryContainer of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   SetContainer        of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   DotName             of uint32 * uint32 * Symbol * Symbol
+    |   CallExpression      of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   IndexExpression     of uint32 * uint32 * Symbol * AbstractSyntaxNodes * Symbol
+    |   Tuple               of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   List                of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   Dictionary          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   Set                 of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -327,6 +334,22 @@ let rec ParseAtom( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
                     |       _ ->    false
                 do ()
             String( start_pos, end_pos, List.toArray( List.rev nodes ) ), restAgain
+    |   Some( PyLeftParen( _ ), rest) ->
+                let start_pos = GetStartPosition(stream)
+                let op1 = List.head stream
+                match TryToken rest with
+                |   Some( PyRightParen( _, e ), rest2) ->
+                        let op2 = List.head rest
+                        Tuple( start_pos, e, op1, Option.None, op2), rest2
+                |   _ ->
+                        let node10, rest10 =    match TryToken rest with
+                                                |   Some( PyYield( _ ), _ ) -> ParseYieldExpr rest
+                                                |   _ ->  ParseTestListComp rest
+                        match TryToken rest10 with
+                        |   Some( PyRightParen( _ , e ), rest11) ->
+                                let op2 = List.head rest10
+                                Tuple( start_pos, e, op1, Some( node10 ), op2 ), rest11
+                        |   _ ->   raise (SyntaxError(GetStartPosition rest10, "Expecting ')' in tuple!"))
     | _ ->  raise ( SyntaxError(GetStartPosition(stream), "Expecting a literal!") )
 
 and ParseAtomExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
@@ -727,7 +750,36 @@ and ParseTestListComp( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolSt
                
     TestList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest2
 
-and ParseTrailer( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTrailer( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let symbol1 = List.head stream
+    match TryToken stream with
+    |   Some( PyDot( _ ), rest ) ->
+            match TryToken rest with
+            |   Some( PyName( _ , e , _ ), rest2 ) ->
+                    let name = List.head rest
+                    DotName( start_pos, e, symbol1, name), rest2
+            |   _ ->   raise ( SyntaxError(GetStartPosition rest, "Expecting Name literal after '.'!") )
+    |   Some( PyLeftParen( _ ), rest ) ->
+            let node, rest2 =
+                    match TryToken rest with
+                    |   Some( PyRightParen( _ ), _ ) -> Option.None, rest
+                    |   _ ->
+                            let a, b = ParseArgList rest
+                            Some( a ), b
+            match TryToken rest2 with
+            |    Some( PyRightParen( _ , e ), rest3) ->
+                    let symbol2 = List.head rest2
+                    CallExpression( start_pos, e, symbol1, node, symbol2), rest3
+            |    _ ->   raise( SyntaxError(GetStartPosition rest2, "Expecting ')' in call!") )
+    |   Some( PyLeftBracket( _ ), rest ) ->
+            let node, rest2 = ParseSubscriptList rest
+            match TryToken rest2 with
+            |    Some( PyRightBracket( _, e ), rest3) ->
+                    let symbol2 = List.head rest2
+                    IndexExpression( start_pos, e, symbol1, node, symbol2), rest3
+            |    _ ->   raise( SyntaxError(GetStartPosition rest2, "Expecting ']' in indexer!") )
+    |   _ ->   Empty, stream
 
 and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
@@ -1016,6 +1068,11 @@ and ParseTestListStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * Symb
         do ()
     
     TestListStarExpr( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
-
+    
+and ParseArgList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    ( Empty, stream )
+    
+and ParseArgument( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    ( Empty, stream )
 
 // Parser: Statement rules ////////////////////////////////////////////////////////////////////////////////////////////
