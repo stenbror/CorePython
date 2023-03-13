@@ -406,3 +406,21 @@ let ``Parse Expression rule 'not test' with multiple operator`` () =
     let expecting = AbstractSyntaxNodes.NotTest( 0u, 9u, Symbol.PyNot( 0u, 2u ), NotTest( 4u, 9u, Symbol.PyNot( 4u, 6u ), Name( 8u, 9u, PyName( 8u, 9u, "ab" ) ) ) );
     Assert.Equal( expecting, node )
     Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'or test' with single operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyAnd( 2u, 4u ); Symbol.PyNumber( 6u, 6u, "8" ); ]
+    let node, rest  = stream |> ParseAndTest
+    let expecting = AbstractSyntaxNodes.AndTest( 0u, 6u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyAnd( 2u, 4u ), Number( 6u, 6u, PyNumber( 6u, 6u, "8" ) ) );
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )
+    
+[<Fact>]
+let ``Parse Expression rule 'or test' with multiple operator`` () =
+    let stream = [ Symbol.PyName( 0u, 0u, "a" ); Symbol.PyAnd( 2u, 4u ); Symbol.PyNumber( 6u, 6u, "8" ); Symbol.PyAnd( 8u, 10u ); Symbol.PyNumber( 12u, 12u, "8" ); ]
+    let node, rest  = stream |> ParseAndTest
+    let expecting = AbstractSyntaxNodes.AndTest( 0u, 12u,
+            AndTest( 0u, 6u, Name( 0u, 0u, PyName( 0u, 0u, "a") ), Symbol.PyAnd( 2u, 4u ), Number( 6u, 6u, PyNumber( 6u, 6u, "8" ) ) ),
+            Symbol.PyAnd( 8u, 10u ), Number( 12u, 12u, PyNumber( 12u, 12u, "8" ) ));
+    Assert.Equal( expecting, node )
+    Assert.True( List.isEmpty rest )

@@ -585,7 +585,19 @@ and ParseNotTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream 
             NotTest( start_pos, GetNodeEndPosition( right ), op, right ), rest2
     |  _ -> ParseComparison stream
 
-and ParseAndTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseAndTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable left, rest = ParseNotTest stream
+    while   match TryToken rest with
+            |  Some( PyAnd( _ ), rest2) ->
+                    let op = List.head rest
+                    let right, rest3 = ParseNotTest rest2
+                    left <- AndTest( start_pos, GetNodeEndPosition( right ), left, op, right )
+                    rest <- rest3
+                    true
+            | _ -> false
+            do ()
+    left, rest
 
 and ParseOrTest( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
