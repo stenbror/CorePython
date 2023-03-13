@@ -108,49 +108,50 @@ type SymbolStream = Symbol list
 // Nodes generated during parsing of source code //////////////////////////////////////////////////////////////////////
 type AbstractSyntaxNodes =
     |   Empty
-    |   False           of uint32 * uint32 * Symbol
-    |   None            of uint32 * uint32 * Symbol 
-    |   True            of uint32 * uint32 * Symbol
-    |   Ellipsis        of uint32 * uint32 * Symbol
-    |   Name            of uint32 * uint32 * Symbol
-    |   Number          of uint32 * uint32 * Symbol
-    |   String          of uint32 * uint32 * Symbol array
-    |   AtomExpr        of uint32 * uint32 * Symbol option * AbstractSyntaxNodes * AbstractSyntaxNodes array option
-    |   Power           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   UnaryPlus       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   UnaryMinus      of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   BitwiseInvert   of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   Mul             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Div             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   FloorDiv        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Modulo          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Matrices        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Plus            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Minus           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   ShiftLeft       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   ShiftRight      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   BitwiseAnd      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   BitwiseXor      of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   BitwiseOr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   StarExpr        of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   Less            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   LessEqual       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Equal           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   GreaterEqual    of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Greater         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   NotEqual        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   In              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Is              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   NotIn           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
-    |   IsNot           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
-    |   NotTest         of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   AndTest         of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   OrTest          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   Lambda          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * AbstractSyntaxNodes
-    |   Test            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   NamedExpr       of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
-    |   YieldExpr       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
-    |   YieldFrom       of uint32 * uint32 * Symbol * Symbol * AbstractSyntaxNodes
+    |   False               of uint32 * uint32 * Symbol
+    |   None                of uint32 * uint32 * Symbol 
+    |   True                of uint32 * uint32 * Symbol
+    |   Ellipsis            of uint32 * uint32 * Symbol
+    |   Name                of uint32 * uint32 * Symbol
+    |   Number              of uint32 * uint32 * Symbol
+    |   String              of uint32 * uint32 * Symbol array
+    |   AtomExpr            of uint32 * uint32 * Symbol option * AbstractSyntaxNodes * AbstractSyntaxNodes array option
+    |   Power               of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   UnaryPlus           of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   UnaryMinus          of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   BitwiseInvert       of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   Mul                 of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Div                 of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   FloorDiv            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Modulo              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Matrices            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Plus                of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Minus               of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   ShiftLeft           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   ShiftRight          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseAnd          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseXor          of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   BitwiseOr           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   StarExpr            of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   Less                of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   LessEqual           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Equal               of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   GreaterEqual        of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Greater             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NotEqual            of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   In                  of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Is                  of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NotIn               of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
+    |   IsNot               of uint32 * uint32 * AbstractSyntaxNodes * Symbol * Symbol * AbstractSyntaxNodes
+    |   NotTest             of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   AndTest             of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   OrTest              of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   Lambda              of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * AbstractSyntaxNodes
+    |   Test                of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   NamedExpr           of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
+    |   YieldExpr           of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   YieldFrom           of uint32 * uint32 * Symbol * Symbol * AbstractSyntaxNodes
+    |   TestListStarExpr    of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -718,7 +719,51 @@ and ParseYieldExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStrea
                 YieldExpr( start_pos, GetNodeEndPosition right, op1, right ), rest4
     |  _ -> raise (SyntaxError(GetStartPosition stream, "Expecting 'yield' expression!"))
     
-and ParseTestListStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseTestListStarExpr( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable nodes : AbstractSyntaxNodes list = List.Empty
+    let mutable separators : Symbol list = List.Empty
+    let mutable node, rest = match TryToken stream with
+                             |  Some( PyMul( _ ), _ )  -> ParseStarExpr stream
+                             | _ -> ParseTest stream
+    nodes <- node :: nodes
+    end_pos <- GetNodeEndPosition node
+    while   match TryToken rest with
+            |  Some( PyComma( _ ), rest2 ) ->
+                    separators <- List.head rest :: separators
+                    match TryToken rest2 with   
+                    |  Some( PyPlusAssign( _ ), _ )
+                    |  Some( PyMinusAssign( _ ), _ )
+                    |  Some( PyMulAssign( _ ), _ )
+                    |  Some( PyPowerAssign( _ ), _ )
+                    |  Some( PyMatriceAssign( _ ), _ )
+                    |  Some( PyModuloAssign( _ ), _ )
+                    |  Some( PyBitwiseAndAssign( _ ), _ )
+                    |  Some( PyBitwiseOrAssign( _ ), _ )
+                    |  Some( PyBitwiseXorAssign( _ ), _ )
+                    |  Some( PyShiftLeftAssign( _ ), _ )
+                    |  Some( PyShiftRightAssign( _ ), _ )
+                    |  Some( PyFloorDivAssign( _ ), _ )
+                    |  Some( PyDivAssign( _ ), _ )
+                    |  Some( PyAssign( _ ), _ )
+                    |  Some( PyColon( _ ), _ )
+                    |  Some( PySemicolon( _ ), _ )
+                    |  Some( Newline( _ ), _ )
+                    |  Some( EOF( _ ), _ ) ->
+                            rest <- rest2
+                    |  _  ->
+                         let node2, rest3 =  match TryToken rest2 with
+                                             |  Some( PyMul( _ ), _ )  -> ParseStarExpr rest2
+                                             | _ -> ParseTest rest2
+                         rest <- rest3
+                         nodes <- node2 :: nodes
+                         end_pos <- GetNodeEndPosition node2
+                    true
+            |  _ ->  false
+        do ()
+    
+    TestListStarExpr( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
 
 
 // Parser: Statement rules ////////////////////////////////////////////////////////////////////////////////////////////
