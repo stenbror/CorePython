@@ -862,7 +862,13 @@ and ParseExprList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
 
 and ParseDictionaryOrSetMaker( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
-and ParseCompIter( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseCompIter( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    match TryToken stream with
+        |  Some( PyFor( _ ), _ )
+        |  Some( PyAsync( _ ), _ )  ->  ParseCompFor stream
+        |  Some( PyIf( _ ), _ )     ->  ParseCompIf stream
+        |  _                        ->  raise(SyntaxError( ( GetStartPosition stream ),
+                                                          "Expecting 'for', 'async' ir 'if' in comprehension"))
 
 and ParseSyncCompFor( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
 
