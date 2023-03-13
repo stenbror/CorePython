@@ -172,6 +172,8 @@ type AbstractSyntaxNodes =
     |   List                of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   Dictionary          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   Set                 of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   ArgumentList        of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   Argument            of uint32 * uint32 * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1111,6 +1113,26 @@ and ParseArgList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream 
     ( Empty, stream )
     
 and ParseArgument( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
-    ( Empty, stream )
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyMul( _ ), rest )
+    |  Some( PyPower( _ ), rest ) ->
+          let op = List.head stream
+          let right, rest2 = ParseTest rest
+          Argument( start_pos, GetNodeEndPosition right, Option.None, Some( op ), right), rest2
+    |  _ ->
+         let left, rest3 = ParseTest stream
+         match TryToken rest3 with
+         |    Some( PyAsync( _ ), _ )
+         |    Some( PyFor( _ ), _ ) ->
+                 let right, rest4 = ParseCompFor rest3
+                 Argument( start_pos, GetNodeEndPosition right, Some( left ), Option.None, right), rest4
+         |    Some( PyColonAssign( _ ), rest5)
+         |    Some( PyAssign( _ ), rest5) ->
+                 let op = List.head rest3
+                 let right, rest6 = ParseTest rest5
+                 Argument( start_pos, GetNodeEndPosition right, Some( left ), Some( op ), right), rest6
+         |  _ ->
+              left, rest3
 
 // Parser: Statement rules ////////////////////////////////////////////////////////////////////////////////////////////
