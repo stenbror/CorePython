@@ -4,6 +4,8 @@
 
 module CorePython.Compiler.PythonCoreParser
 
+open Microsoft.FSharp.Core
+
 // Error handling system in parser ////////////////////////////////////////////////////////////////////////////////////
 exception SyntaxError of uint * string
 
@@ -157,6 +159,7 @@ type AbstractSyntaxNodes =
     |   TestList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   ExprList            of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   SubscriptList       of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
+    |   Subscript           of uint32 * uint32 * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes option
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -748,7 +751,54 @@ and ParseSubscriptList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolS
     
     SubscriptList( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators) ), rest
 
-and ParseSubscript( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) = ( Empty, [] )
+and ParseSubscript( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable end_pos = start_pos
+    let mutable first : AbstractSyntaxNodes option = Option.None
+    let mutable op1 : Symbol option = Option.None
+    let mutable second : AbstractSyntaxNodes option = Option.None
+    let mutable op2 : Symbol option = option.None
+    let mutable third : AbstractSyntaxNodes option = option.None
+    let mutable rest = stream
+    match TryToken rest with
+    |   Some( PyColon( _ , e ), _ ) ->  ()
+    |   _ ->
+            let node1, rest1 = ParseTest rest
+            first <- Some( node1 )
+            rest <- rest1
+            end_pos <- GetNodeEndPosition node1
+    match TryToken rest with
+    |  Some( PyColon( _ , e ), rest2 ) ->
+            op1 <- Some( List.head rest )
+            rest <- rest2
+            end_pos <- e
+            match TryToken rest with 
+            |   Some( PyColon( _ ), _ )
+            |   Some( PyComma( _ ), _ )
+            |   Some( PyRightBracket( _ ), _ ) -> ()
+            |  _ ->
+                let node2, rest3 = ParseTest rest
+                second <- Some( node2 )
+                rest <- rest3
+                end_pos <- GetNodeEndPosition node2
+            match TryToken rest with
+            |   Some( PyColon( _ , e ), rest4 ) ->
+                    op2 <- Some( List.head rest )
+                    rest <- rest4
+                    end_pos <- e
+                    match TryToken rest with
+                    |   Some( PyComma( _ ), _ )
+                    |   Some( PyRightBracket( _ ), _ ) ->
+                            ()
+                    |   _ ->
+                            let node3, rest5 = ParseTest rest
+                            third <- Some( node3 )
+                            rest <- rest5
+                            end_pos <- GetNodeEndPosition node3
+            |   _ ->  ()
+    |  _ -> ()
+    
+    Subscript( start_pos, end_pos, first, op1, second, op2, third ), rest
 
 and ParseTestList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
     let start_pos = GetStartPosition stream
