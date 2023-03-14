@@ -1123,7 +1123,133 @@ and ParseVarArgsList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStr
     let mutable separators : Symbol List = List.Empty
     let mutable rest = stream
     
-    // Insert code for grammar here!
+    match TryToken rest with
+        |   Some( PyPower( _ ), rest2 ) ->
+                powerOp <- Some( List.head rest )
+                let node1, rest3 = ParseVFPDef rest2
+                powerNode <- Some( node1 )
+                rest <- rest3
+                end_pos <- GetNodeEndPosition powerNode.Value
+                match TryToken rest with
+                |   Some( PyComma( _ , e ), rest4 ) ->
+                        separators <- List.head rest :: separators
+                        rest <- rest4
+                        end_pos <- e
+                |   _ -> ()
+        |   Some( PyMul( _ ), rest5 ) ->
+                mulOp <- Some( List.head rest )
+                let node2, rest6 = ParseVFPDef rest5
+                mulNode <- Some( node2 )
+                rest <- rest6
+                while   match TryToken rest with
+                        |   Some( PyComma( _ ), rest7) ->
+                                separators <- List.head rest :: separators
+                                match TryToken rest7 with
+                                |   Some( PyPower( _ ), rest8) ->
+                                        powerOp <- Some( List.head rest )
+                                        let node1, rest3 = ParseVFPDef rest8
+                                        powerNode <- Some( node1 )
+                                        rest <- rest3
+                                        match TryToken rest with
+                                        |   Some( PyComma( _ ), rest4 ) ->
+                                                separators <- List.head rest :: separators
+                                                rest <- rest4
+                                        |   _ -> ()
+                                        false
+                                |   _ ->
+                                        let node3, rest9 = ParseVFPDef rest7
+                                        match TryToken rest9 with
+                                        |   Some( PyAssign( _ ), rest10 ) ->
+                                                let op = List.head rest9
+                                                let node4, rest11 = ParseTest rest10
+                                                nodes <- VFPDefAssign( start_pos, GetStartPosition rest11, node3, op, node4) :: nodes
+                                                rest <- rest11
+                                        |   _ ->
+                                                nodes <- node3 :: nodes
+                                                rest <- rest9
+                                        true
+                        |   _ ->  false
+                   do ()
+        | _ ->
+                let node10, rest10 = ParseVFPDef rest
+                match TryToken rest10 with
+                |   Some( PyAssign( _ ), rest11) ->
+                        let op = List.head rest10
+                        let node11, rest12 = ParseTest rest11
+                        nodes <- VFPDefAssign( start_pos, GetStartPosition rest12, node10, op, node11 ) :: nodes
+                        rest <- rest12
+                |   _ ->
+                        nodes <- node10 :: nodes
+                        rest <- rest10
+                
+                        while   match TryToken rest with
+                                |   Some( PyComma( _ ), rest13 ) ->
+                                        separators <- List.head rest :: separators
+                                        match TryToken rest13 with
+                                        |   Some( PyColon( _ ), _ ) -> false
+                                        |   Some( PyMul( _ ), rest14) ->                  
+                                                mulOp <- Some( List.head rest13 )
+                                                let node2, rest6 = ParseVFPDef rest14
+                                                mulNode <- Some( node2 )
+                                                rest <- rest6
+                                                while   match TryToken rest with
+                                                        |   Some( PyComma( _ ), rest7 ) ->
+                                                                separators <- List.head rest :: separators
+                                                                match TryToken rest7 with
+                                                                |   Some( PyPower( _ ), rest8) ->
+                                                                        powerOp <- Some( List.head rest )
+                                                                        let node1, rest3 = ParseVFPDef rest8
+                                                                        powerNode <- Some( node1 )
+                                                                        rest <- rest3
+                                                                        match TryToken rest with
+                                                                        |   Some( PyComma( _ ), rest4 ) ->
+                                                                                separators <- List.head rest :: separators
+                                                                                rest <- rest4
+                                                                        |   _ -> ()
+                                                                        false
+                                                                |   _ ->
+                                                                        let node3, rest9 = ParseVFPDef rest7
+                                                                        match TryToken rest9 with
+                                                                        |   Some( PyAssign( _ ), rest10) ->
+                                                                                let op = List.head rest9
+                                                                                let node4, rest11 = ParseTest rest10
+                                                                                nodes <- VFPDefAssign( start_pos, GetStartPosition rest11, node3, op, node4) :: nodes
+                                                                                rest <- rest11
+                                                                        |   _ ->
+                                                                                nodes <- node3 :: nodes
+                                                                                rest <- rest9
+                                                                        true
+                                                        |   _ ->  false
+                                                   do ()
+                                                false      
+                                        |   Some( PyPower( _ ), rest14) ->
+                                                powerOp <- Some( List.head rest13 )
+                                                let node1, rest3 = ParseVFPDef rest14
+                                                powerNode <- Some( node1 )
+                                                rest <- rest3
+                                                match TryToken rest with
+                                                |   Some( PyComma( _ ), rest4) ->
+                                                        separators <- List.head rest :: separators
+                                                        rest <- rest4
+                                                |   _ -> ()
+                                                false
+                                        |   Some( PyComma( _ ), _ ) ->
+                                                raise (SyntaxError(GetStartPosition rest13, "Unexpected ',' in list!"))
+                                        |   _ ->
+                                                true
+                                |   _ ->
+                                        let node10, rest10 = ParseVFPDef rest
+                                        match TryToken rest10 with
+                                        |   Some( PyAssign( _ ), rest11) ->
+                                                let op = List.head rest10
+                                                let node11, rest12 = ParseTest rest11
+                                                nodes <- VFPDefAssign( start_pos, GetStartPosition rest12, node10, op, node11) :: nodes
+                                                rest <- rest12
+                                        |   _ ->
+                                                nodes <- node10 :: nodes
+                                                rest <- rest10
+                                        true
+                            do ()
     
     VarArgsList( start_pos, end_pos, mulOp, mulNode, powerOp, powerNode,
                             List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
