@@ -170,6 +170,8 @@ type AbstractSyntaxNodes =
     |   IndexExpression     of uint32 * uint32 * Symbol * AbstractSyntaxNodes * Symbol
     |   Tuple               of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   List                of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
+    |   PowerKey            of uint32 * uint32 * Symbol * AbstractSyntaxNodes
+    |   DictiionaryEntry    of uint32 * uint32 * AbstractSyntaxNodes * Symbol * AbstractSyntaxNodes
     |   Dictionary          of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   Set                 of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   ArgumentList        of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
@@ -968,7 +970,95 @@ and ParseDictionaryOrSetMaker( stream: SymbolStream ) : ( AbstractSyntaxNodes * 
     let mutable nodes : AbstractSyntaxNodes List = List.Empty
     let mutable separators : Symbol List = List.Empty
     
-    // Insert code for grammar handling here!
+    match TryToken rest with
+    |   Some( PyMul( _ ), _ ) ->
+            isDictionary <- false
+            let node, rest2 = ParseStarExpr rest
+            key <- node
+            rest <- rest2
+            end_pos <- GetNodeEndPosition node
+    |   Some( PyPower( s , _ ), rest2 ) ->
+            let op1 = List.head rest
+            let node2, rest4 = ParseTest rest2
+            rest <- rest4
+            end_pos <- GetNodeEndPosition node2
+            key <- PowerKey( s, end_pos, op1, node2 )
+    |   _ ->
+        let node3, rest5 = ParseTest rest
+        key <- node3
+        rest <- rest5
+        match TryToken rest with
+        |   Some( PyColon( _ ), rest6 ) ->
+                let op1 = List.head rest
+                let node4, rest7 = ParseTest rest6
+                rest <- rest7
+                value <- node4
+                end_pos <- GetNodeEndPosition node4
+                key <- DictiionaryEntry( start_pos, end_pos, key, op1, value )
+        |   _ ->  isDictionary <- false
+    
+    nodes <- key :: nodes
+    
+    match TryToken rest with
+        |   Some( PyFor( _ ), _ )
+        |   Some( PyAsync( _ ), _ ) ->
+                let node3, rest8 = ParseCompFor rest
+                nodes <- node3 :: nodes
+                rest <- rest8
+                end_pos <- GetNodeEndPosition node3
+        |   _ ->
+                match isDictionary with
+                |   true ->
+                        while   match TryToken rest with
+                                |   Some( PyComma( _ ), rest20 ) ->
+                                        let op2 = List.head rest
+                                        separators <- op2 :: separators
+                                        rest <- rest20
+                                        match TryToken rest with
+                                        |   Some( PyRightCurly( _ ), _ ) -> false
+                                        |   Some( PyComma( _ ), _ ) ->
+                                                raise (SyntaxError(GetStartPosition rest, "Unexpected ',' in dictionary!"))
+                                        |   Some( PyPower( s, _ ), rest21 ) ->
+                                                let op3 = List.head rest
+                                                let node5, rest22 = ParseTest rest21
+                                                end_pos <- GetNodeEndPosition node5
+                                                nodes <- PowerKey( s, end_pos, op3, node5 ) :: nodes
+                                                rest <- rest22
+                                                true
+                                        |   _ ->
+                                                let s = GetStartPosition rest
+                                                let node6, rest23 = ParseTest rest
+                                                match TryToken rest23 with
+                                                |   Some( PyColon( _ ), rest24 ) ->
+                                                        let op5 = List.head rest23
+                                                        let node7, rest25 = ParseTest rest24
+                                                        rest <- rest25
+                                                        end_pos <- GetNodeEndPosition node7
+                                                        nodes <- DictiionaryEntry( s, end_pos, node6, op5, node7 ) :: nodes
+                                                        true
+                                                |   _ ->  raise (SyntaxError(GetStartPosition rest23, "Expecting ':' in dictionary entry!"))
+                                |   _ ->        false
+                            do ()
+                |   _ ->
+                        while   match TryToken rest with
+                                |   Some( PyComma( _ ), rest10 ) ->
+                                        let op1 = List.head rest
+                                        separators <- op1 :: separators
+                                        rest <- rest10
+                                        match TryToken rest with
+                                        |   Some( PyRightCurly( _ ), _ ) -> false
+                                        |   Some( PyComma( _ ), _ ) ->
+                                                raise (SyntaxError(GetStartPosition rest, "Unexpected ',' in set!"))
+                                        |   _ ->
+                                                let node4, rest11 = match TryToken rest with
+                                                                    |   Some( PyMul( _ ), _ ) ->  ParseStarExpr rest
+                                                                    |   _ ->  ParseTest rest
+                                                nodes <- node4 :: nodes
+                                                end_pos <- GetNodeEndPosition node4
+                                                rest <- rest11
+                                                true
+                                |   _ -> false
+                            do ()
     
     match isDictionary with
         |    true ->    DictionaryContainer( start_pos, end_pos, List.toArray(List.rev nodes), List.toArray(List.rev separators)), rest
