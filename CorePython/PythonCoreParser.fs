@@ -1376,3 +1376,148 @@ and ParseArgument( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream
               left, rest3
 
 // Parser: Statement rules ////////////////////////////////////////////////////////////////////////////////////////////
+
+let rec ParseStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    match TryToken stream with
+        |   Some( PyName( _ , _ , "match" ), _ )
+        |   Some( PyIf( _ ), _ ) 
+        |   Some( PyWhile( _ ), _ )
+        |   Some( PyFor( _ ), _ )
+        |   Some( PyWith( _ ), _ ) 
+        |   Some( PyTry( _ ), _ ) 
+        |   Some( PyClass( _ ), _ )
+        |   Some( PyDef( _ ), _ )
+        |   Some( PyAsync( _ ), _ )
+        |   Some( PyMatrice( _ ), _ ) ->    ParseCompoundStmt (stream, flows)
+        |   _ ->   ParseSimpleStmt (stream, flows)
+        
+and ParseSimpleStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseSmallStmt( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseExprStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseDelStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParsePassStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+        
+and ParseFlowStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseBreakStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseContinueStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseReturnStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseYieldStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseRaiseStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseImportStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseImportNameStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseImportFromStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseImportNamesStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseDottedAsNameStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+        
+and ParseDottedAsNamesStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseImportAsNamesStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseDottedNameStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseGlobalStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseNonLocalStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+    
+and ParseAssertStmt( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    Empty, stream
+        
+and ParseCompoundStmt( stream: SymbolStream, flows: ( uint * uint ) ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+    Empty, stream, flows
+    
+and ParseIf( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseElif( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * (  uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseElse( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseWhile( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint) ) =
+        Empty, stream, flows
+        
+    and ParseFor( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * (uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseTry( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * (uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseWith( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseWithItem( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+        Empty, stream
+        
+    and ParseAsync( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseSuiteExcept( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+        Empty, stream
+        
+    and ParseFuncSuite( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseDecorator( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseDecorators( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * (uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseDecorated( stream: SymbolStream, flows: uint * uint ) : (AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseAsyncFuncDef( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseFuncDef( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+    and ParseParameters( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+        Empty, stream
+        
+    and ParseTypedArgsList( stream: SymbolStream ) : (AbstractSyntaxNodes * SymbolStream ) =
+        Empty, stream
+        
+    and ParseTFPDef( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+        Empty, stream
+        
+    and ParseClass( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
+        Empty, stream, flows
+        
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
