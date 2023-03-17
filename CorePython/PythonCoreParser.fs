@@ -176,6 +176,9 @@ type AbstractSyntaxNodes =
     |   Set                 of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol
     |   ArgumentList        of uint32 * uint32 * AbstractSyntaxNodes array * Symbol array
     |   Argument            of uint32 * uint32 * AbstractSyntaxNodes option * Symbol option * AbstractSyntaxNodes
+    |   FuncType            of uint32 * uint32 * Symbol * AbstractSyntaxNodes option * Symbol * Symbol * AbstractSyntaxNodes
+    |   TypeList            of uint32 * uint32 * ( Symbol * AbstractSyntaxNodes ) option * ( Symbol * AbstractSyntaxNodes ) option * AbstractSyntaxNodes array * Symbol array
+    
     
 // Parser and lexer functions /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1520,4 +1523,130 @@ and ParseIf( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes 
     and ParseClass( stream: SymbolStream, flows: uint * uint ) : ( AbstractSyntaxNodes * SymbolStream * ( uint * uint ) ) =
         Empty, stream, flows
         
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Parser rules for Functional ////////////////////////////////////////////////////////////////////////////////////////
+
+let rec ParseFuncType( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    match TryToken stream with
+    |  Some( PyLeftParen( _ ), rest ) ->
+        let op1 = List.head stream
+        let left, rest3 : AbstractSyntaxNodes option * SymbolStream =   match TryToken rest with
+                                                                        |   Some( PyRightParen( _ ), _ ) ->   Option.None, rest
+                                                                        |   _ ->
+                                                                            let a, b = ParseTypeList rest
+                                                                            Some (a) , b
+        let op2, rest4 =    match TryToken rest3 with
+                            |   Some( PyRightParen( _ ), rest5 ) ->
+                                   List.head rest3, rest5
+                            |   _ ->   raise (SyntaxError(GetStartPosition rest3, "Missing ')' in function definition!"))
+        let op3, rest6 =    match TryToken rest4 with
+                            |   Some( PyArrow( _ ), rest7 ) ->
+                                    List.head rest4, rest7
+                            |   _ ->   raise (SyntaxError(GetStartPosition rest4, "Expecting '->' in function definition!"))
+        let right, rest8 = ParseTest rest6
+        FuncType( start_pos, GetNodeEndPosition right, op1, left, op2, op3, right), rest8
+    |  _ -> raise (SyntaxError(start_pos, "Expecting '(' in function type!"))
+
+and ParseTypeList( stream: SymbolStream ) : ( AbstractSyntaxNodes * SymbolStream ) =
+    let start_pos = GetStartPosition stream
+    let mutable nodes : AbstractSyntaxNodes List = List.Empty
+    let mutable separators : Symbol List = List.Empty
+    let mutable mulOp : Symbol option = Option.None
+    let mutable mulNode : AbstractSyntaxNodes option = Option.None
+    let mutable powerOp : Symbol option = Option.None
+    let mutable powerNode : AbstractSyntaxNodes option = Option.None
+    let mutable restAgain = stream
+    let mutable end_pos = start_pos
+    
+    match TryToken restAgain with
+        |   Some( PyPower( _ ), rest ) ->
+                powerOp <- Some( List.head restAgain )
+                let elem, rest2 = ParseTest rest
+                powerNode <- Some( elem )
+                restAgain <- rest2
+                end_pos <- GetNodeEndPosition powerNode.Value
+        |   Some( PyMul( _ ), rest ) ->
+                mulOp <- Some( List.head restAgain )
+                let elem, rest2 = ParseTest rest
+                mulNode <- Some( elem )
+                restAgain <- rest2
+                end_pos <- GetNodeEndPosition mulNode.Value
+                while   match TryToken restAgain with
+                        |   Some( PyComma( _ ), rest3 ) ->
+                                separators <- List.head restAgain :: separators
+                                match TryToken rest3 with
+                                |   Some( PyPower( _ ), _ ) ->
+                                        powerOp <- Some( List.head rest3 )
+                                        let elem, rest2 = ParseTest rest
+                                        powerNode <- Some( elem )
+                                        restAgain <- rest2
+                                        end_pos <- GetNodeEndPosition powerNode.Value
+                                        false
+                                |   _ ->
+                                    let elem2, rest4 = ParseTest rest3
+                                    nodes <- elem2 :: nodes
+                                    restAgain <- rest4
+                                    end_pos <- GetNodeEndPosition elem2
+                                    true
+                        |   _ -> false
+                    do ()
+        |   _ ->
+            let node, rest = ParseTest restAgain
+            nodes <- node :: nodes
+            restAgain <- rest
+            end_pos <- GetNodeEndPosition node
+            while   match TryToken restAgain with
+                    |   Some( PyComma( _ ), rest2 ) ->
+                            separators <- List.head restAgain :: separators
+                            end_pos <- GetStartPosition rest2
+                            restAgain <- rest2
+                            match TryToken restAgain with
+                            |   Some( PyRightParen( _ ), _ ) -> false
+                            |   Some( PyPower( _ ), rest ) ->
+                                    powerOp <- Some( List.head restAgain )
+                                    let elem, rest2 = ParseTest rest
+                                    powerNode <- Some( elem )
+                                    restAgain <- rest2
+                                    end_pos <- GetNodeEndPosition powerNode.Value
+                                    false
+                            |   Some( PyMul( _ ), rest ) ->
+                                    mulOp <- Some( List.head restAgain )
+                                    let elem, rest2 = ParseTest rest
+                                    mulNode <- Some( elem )
+                                    restAgain <- rest2
+                                    end_pos <- GetNodeEndPosition mulNode.Value
+                                    while   match TryToken restAgain with
+                                            |   Some( PyComma( _ ), rest3 ) ->
+                                                    separators <- List.head restAgain :: separators
+                                                    match TryToken rest3 with
+                                                    |   Some( PyPower( _ ), _ ) ->
+                                                            powerOp <- Some( List.head rest3 )
+                                                            let elem, rest2 = ParseTest rest
+                                                            powerNode <- Some( elem )
+                                                            restAgain <- rest2
+                                                            end_pos <- GetNodeEndPosition powerNode.Value
+                                                            false
+                                                    |   _ ->
+                                                        let elem2, rest4 = ParseTest rest3
+                                                        nodes <- elem2 :: nodes
+                                                        restAgain <- rest4
+                                                        end_pos <- GetNodeEndPosition elem2
+                                                        true
+                                            |   _ -> false
+                                        do ()
+                                    false
+                            |   _ ->
+                                    false      
+                    |   _ -> false
+                do ()
+    
+    // Arrange resulting node
+    let mul_node =  match mulOp  with
+                    |   Some( Symbol.PyMul( _ ) ) -> Some( ( mulOp.Value, mulNode.Value ) )
+                    |   _ ->    Option.None
+                    
+    let power_node =    match powerOp  with
+                        |   Some( Symbol.PyPower( _ ) ) -> Some( ( powerOp.Value, powerNode.Value ) )
+                        |   _ ->    Option.None
+    
+    TypeList( start_pos, end_pos, mul_node, power_node, List.toArray(List.rev nodes), List.toArray(List.rev separators)), restAgain
